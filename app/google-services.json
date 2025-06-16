@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "770229381671",
+    "project_id": "matricareog",
+    "storage_bucket": "matricareog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770229381671:android:f0ca757a56d4233e5dbc02",
+        "android_client_info": {
+          "package_name": "com.example.matricareog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfdJK-JxLQok5KUAbhoJRidTz6RZgtQKk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
