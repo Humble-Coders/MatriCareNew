@@ -2,16 +2,27 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    kotlin("kapt")
     id("com.google.gms.google-services")
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 android {
     namespace = "com.example.matricareog"
     compileSdk = 35
 
+    // tensorflow
+    aaptOptions {
+        noCompress.add("tflite")  // Note the .add() for Kotlin DSL
+    }
+
     defaultConfig {
         applicationId = "com.example.matricareog"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -32,6 +43,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -41,8 +54,26 @@ android {
 }
 
 dependencies {
+
+
+    //tensorflow dependencies
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.select.tf.ops)
+
+    // corountine
+    implementation(libs.kotlinx.coroutines.android)
+
+
+    // YCharts for Jetpack Compose charting
+    implementation(libs.ycharts)
+    implementation(libs.mpandroidchart)
     // --- Compose BOM (manages compatible versions for Compose libs) ---
     implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+
+
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler) // Use kapt with version catalog
+    implementation(libs.hilt.navigation.compose)
 
     // --- Compose Core Dependencies ---
     implementation("androidx.compose.ui:ui")
@@ -84,4 +115,5 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
 

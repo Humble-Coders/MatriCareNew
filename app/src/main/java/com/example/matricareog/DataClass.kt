@@ -1,5 +1,8 @@
 package com.example.matricareog
 
+import androidx.compose.ui.graphics.vector.ImageVector
+
+
 
 data class User(
     val fullName: String = "",
@@ -14,7 +17,18 @@ sealed class AuthResult {
     object Idle : AuthResult()
 }
 
-
+data class PregnancyInfo(
+    val numberOfPregnancies: Int,
+    val numberOfLiveBirths: Int,
+    val numberOfAbortions: Int
+) {
+    // Helper function for prediction input
+    fun toPredictionInput(): List<Float> = listOf(
+        numberOfPregnancies.toFloat(),
+        numberOfLiveBirths.toFloat(),
+        numberOfAbortions.toFloat()
+    )
+}
 
 
 data class PersonalInformation(
@@ -22,10 +36,14 @@ data class PersonalInformation(
     val systolicBloodPressure: Int = 0,
     val diastolicBloodPressure: Int = 0,
     val glucose: Double = 0.0,
+    val hba1c: Double = 0.0,
     val respirationRate: Int = 0,
     val bodyTemperature: Double = 0.0,
     val pulseRate: Int = 0,
-    val hemoglobinLevel: Double = 0.0
+    val hemoglobinLevel: Double = 0.0,
+    val lifestyle: Int = 1, // 0=Sedentary, 1=Active, 2=VeryActive
+    val alcoholConsumption: Boolean = false,
+    val hasDiabetes: Boolean = false,
 )
 
 data class PregnancyHistory(
@@ -55,7 +73,8 @@ data class HealthReport(
     val bloodPressure: BloodPressure,
     val temperature: Double,
     val detailedMetrics: List<HealthMetric>,
-    val overallStatus: HealthStatus
+    val overallStatus: HealthStatus,
+    val pregnancyInfo: PregnancyInfo? = null
 )
 
 data class BloodPressure(
@@ -85,3 +104,30 @@ data class HealthStatus(
 enum class MetricStatus {
     NORMAL, WARNING, CRITICAL
 }
+
+data class HealthDataPoint(
+    val date: String = "", // Format: "dd/MM"
+    val timestamp: Long = 0L,
+    val hemoglobin: Double = 0.0,
+    val hba1c: Double = 0.0
+)
+
+data class ChartData(
+    val hemoglobinData: List<HealthDataPoint> = emptyList(),
+    val hba1cData: List<HealthDataPoint> = emptyList(),
+    val currentHemoglobin: Double = 0.0,
+    val currentHba1c: Double = 0.0
+)
+
+sealed class MatriCareState {
+    object Loading : MatriCareState()
+    data class Success(val chartData: ChartData) : MatriCareState()
+    data class Error(val message: String) : MatriCareState()
+}
+
+data class ChartRange(
+    val min: Double,
+    val max: Double,
+    val unit: String,
+    val label: String
+)

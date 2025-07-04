@@ -34,7 +34,8 @@ import androidx.compose.foundation.clickable
 
 @Composable
 fun HomeScreen(
-    onTrackHealthClicked: () -> Unit = {}
+    onTrackHealthClicked: () -> Unit = {},
+    onMaternalGuideClicked: () -> Unit = {}
 ) {
     // Get configuration for screen dimensions
     val configuration = LocalConfiguration.current
@@ -85,6 +86,9 @@ fun HomeScreen(
                     onClick = {
                         if (card.title == "Track your health with AI") {
                             onTrackHealthClicked()
+                        }
+                        if (card.title == "Refer the maternal guide") {
+                            onMaternalGuideClicked()
                         }
                     }
                 )

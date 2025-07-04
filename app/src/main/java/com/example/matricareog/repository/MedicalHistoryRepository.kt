@@ -19,6 +19,7 @@ class MedicalHistoryRepository {
     private val firestore = Firebase.firestore
     private val medicalHistoryCollection = firestore.collection("medical_history")
 
+
     // Save medical history to Firestore
     suspend fun saveMedicalHistory(
         userId: String,
@@ -69,5 +70,21 @@ class MedicalHistoryRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    // Add to your existing MedicalHistoryRepository.kt
+    fun getMedicalHistoryUpdates(userId: String, callback: (MedicalHistory?) -> Unit) {
+        firestore.collection("medical_history")
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    callback(null)
+                    return@addSnapshotListener
+                }
+
+                snapshot?.documents?.firstOrNull()?.let { document ->
+                    callback(document.toObject(MedicalHistory::class.java))
+                } ?: callback(null)
+            }
     }
 }
