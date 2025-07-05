@@ -15,7 +15,7 @@ object Routes {
     const val MedicalHistory1 = "MedicalHistoryScreenOne/{userId}"
     const val MedicalHistory2 = "MedicalHistoryScreenTwo/{userId}"
     const val ReportAnalysis = "ReportAnalysisScreen/{userId}"
-
+    const val MATRICARE = "graphscreen"
     // ✅ Use these functions to generate complete route strings at runtime
     fun medicalHistory1Route(userId: String) = "MedicalHistoryScreenOne/$userId"
     fun medicalHistory2Route(userId: String) = "MedicalHistoryScreenTwo/$userId"

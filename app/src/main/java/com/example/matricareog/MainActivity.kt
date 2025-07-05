@@ -116,7 +116,12 @@ class MainActivity : ComponentActivity() {
                             authViewModel = authViewModel
                         )
                     }
-
+                    composable(Routes.MATRICARE) {
+                        MatriCareScreen(
+                            onBackClick = { navController.popBackStack() },
+                            viewModel = viewModel()
+                        )
+                    }
                     // Home Screen
                     composable(Routes.Home) {
                         val userId = currentUser?.uid ?: ""
@@ -126,6 +131,9 @@ class MainActivity : ComponentActivity() {
                             },
                             onMaternalGuideClicked = {
                                 navController.navigate(Routes.MaternalGuide)
+                            },
+                            onReportHistoryClicked = {
+                                navController.navigate(Routes.MATRICARE)
                             }
                         )
                     }

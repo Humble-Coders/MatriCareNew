@@ -34,40 +34,23 @@ fun MedicalHistoryScreenTwo(
     val pinkColor = Color(0xFFEF5DA8)
 
     // Observe ViewModel state
-    val pregnancyHistory by viewModel.pregnancyHistory.observeAsState(PregnancyHistory())
     val isLoading by viewModel.isLoading.observeAsState(false)
     val error by viewModel.error.observeAsState()
 
-    // State for showing success message
-
-
-    // Initialize form fields with existing data from ViewModel
-    var numberOfPregnancies by remember { mutableStateOf(if (pregnancyHistory.numberOfPregnancies == 0) "" else pregnancyHistory.numberOfPregnancies.toString()) }
-    var numberOfLiveBirths by remember { mutableStateOf(if (pregnancyHistory.numberOfLiveBirths == 0) "" else pregnancyHistory.numberOfLiveBirths.toString()) }
-    var numberOfAbortions by remember { mutableStateOf(if (pregnancyHistory.numberOfAbortions == 0) "" else pregnancyHistory.numberOfAbortions.toString()) }
-    var numberOfChildDeaths by remember { mutableStateOf(if (pregnancyHistory.numberOfChildDeaths == 0) "" else pregnancyHistory.numberOfChildDeaths.toString()) }
-    var numberOfDeliveries by remember { mutableStateOf(if (pregnancyHistory.numberOfDeliveries == 0) "" else pregnancyHistory.numberOfDeliveries.toString()) }
-    var lastDeliveryDate by remember { mutableStateOf(pregnancyHistory.lastDeliveryDate ?: "") }
-
-    // Update form fields when pregnancyHistory changes
-    LaunchedEffect(pregnancyHistory) {
-        numberOfPregnancies = if (pregnancyHistory.numberOfPregnancies == 0) "" else pregnancyHistory.numberOfPregnancies.toString()
-        numberOfLiveBirths = if (pregnancyHistory.numberOfLiveBirths == 0) "" else pregnancyHistory.numberOfLiveBirths.toString()
-        numberOfAbortions = if (pregnancyHistory.numberOfAbortions == 0) "" else pregnancyHistory.numberOfAbortions.toString()
-        numberOfChildDeaths = if (pregnancyHistory.numberOfChildDeaths == 0) "" else pregnancyHistory.numberOfChildDeaths.toString()
-        numberOfDeliveries = if (pregnancyHistory.numberOfDeliveries == 0) "" else pregnancyHistory.numberOfDeliveries.toString()
-        lastDeliveryDate = pregnancyHistory.lastDeliveryDate ?: ""
-    }
+    // Simple float/int/string mutable states for form inputs
+    var numberOfPregnancies by remember { mutableFloatStateOf(0f) }
+    var numberOfLiveBirths by remember { mutableFloatStateOf(0f) }
+    var numberOfAbortions by remember { mutableFloatStateOf(0f) }
+    var numberOfChildDeaths by remember { mutableFloatStateOf(0f) }
+    var numberOfDeliveries by remember { mutableFloatStateOf(0f) }
+    var lastDeliveryDate by remember { mutableStateOf("") }
 
     // Show error message if any
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // You can show a snackbar or toast here
             println("Error: $errorMessage")
         }
     }
-
-
 
     Scaffold(
         topBar = {
@@ -155,16 +138,12 @@ fun MedicalHistoryScreenTwo(
                         )
                     }
 
-                    // Form fields with ViewModel integration using OutlinedTextField
+                    // Form fields with optimized state management
                     item {
                         OutlinedTextField(
-                            value = numberOfPregnancies,
+                            value = if (numberOfPregnancies == 0f) "" else numberOfPregnancies.toInt().toString(),
                             onValueChange = { newValue ->
-                                numberOfPregnancies = newValue
-                                val pregnanciesInt = newValue.toIntOrNull() ?: 0
-                                val updatedPregnancyHistory = pregnancyHistory.copy(numberOfPregnancies = pregnanciesInt)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Number of Pregnancies updated: $pregnanciesInt") // Debug log
+                                numberOfPregnancies = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Number of Pregnancies") },
                             placeholder = { Text("Enter number") },
@@ -180,13 +159,9 @@ fun MedicalHistoryScreenTwo(
 
                     item {
                         OutlinedTextField(
-                            value = numberOfLiveBirths,
+                            value = if (numberOfLiveBirths == 0f) "" else numberOfLiveBirths.toInt().toString(),
                             onValueChange = { newValue ->
-                                numberOfLiveBirths = newValue
-                                val liveBirthsInt = newValue.toIntOrNull() ?: 0
-                                val updatedPregnancyHistory = pregnancyHistory.copy(numberOfLiveBirths = liveBirthsInt)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Number of Live Births updated: $liveBirthsInt") // Debug log
+                                numberOfLiveBirths = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Number of Live Births") },
                             placeholder = { Text("Enter number") },
@@ -202,13 +177,9 @@ fun MedicalHistoryScreenTwo(
 
                     item {
                         OutlinedTextField(
-                            value = numberOfAbortions,
+                            value = if (numberOfAbortions == 0f) "" else numberOfAbortions.toInt().toString(),
                             onValueChange = { newValue ->
-                                numberOfAbortions = newValue
-                                val abortionsInt = newValue.toIntOrNull() ?: 0
-                                val updatedPregnancyHistory = pregnancyHistory.copy(numberOfAbortions = abortionsInt)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Number of Abortions updated: $abortionsInt") // Debug log
+                                numberOfAbortions = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Number of Abortions") },
                             placeholder = { Text("Enter number") },
@@ -224,13 +195,9 @@ fun MedicalHistoryScreenTwo(
 
                     item {
                         OutlinedTextField(
-                            value = numberOfChildDeaths,
+                            value = if (numberOfChildDeaths == 0f) "" else numberOfChildDeaths.toInt().toString(),
                             onValueChange = { newValue ->
-                                numberOfChildDeaths = newValue
-                                val childDeathsInt = newValue.toIntOrNull() ?: 0
-                                val updatedPregnancyHistory = pregnancyHistory.copy(numberOfChildDeaths = childDeathsInt)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Number of Child Deaths updated: $childDeathsInt") // Debug log
+                                numberOfChildDeaths = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Number of Child Deaths") },
                             placeholder = { Text("Enter number") },
@@ -246,13 +213,9 @@ fun MedicalHistoryScreenTwo(
 
                     item {
                         OutlinedTextField(
-                            value = numberOfDeliveries,
+                            value = if (numberOfDeliveries == 0f) "" else numberOfDeliveries.toInt().toString(),
                             onValueChange = { newValue ->
-                                numberOfDeliveries = newValue
-                                val deliveriesInt = newValue.toIntOrNull() ?: 0
-                                val updatedPregnancyHistory = pregnancyHistory.copy(numberOfDeliveries = deliveriesInt)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Number of Deliveries updated: $deliveriesInt") // Debug log
+                                numberOfDeliveries = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Number of Deliveries") },
                             placeholder = { Text("Enter number") },
@@ -271,9 +234,6 @@ fun MedicalHistoryScreenTwo(
                             value = lastDeliveryDate,
                             onValueChange = { newValue ->
                                 lastDeliveryDate = newValue
-                                val updatedPregnancyHistory = pregnancyHistory.copy(lastDeliveryDate = newValue)
-                                viewModel.updatePregnancyHistory(updatedPregnancyHistory)
-                                println("Last Delivery Date updated: $newValue") // Debug log
                             },
                             label = { Text("Last Delivery Date") },
                             placeholder = { Text("Enter date (e.g., DD/MM/YYYY)") },
@@ -298,8 +258,22 @@ fun MedicalHistoryScreenTwo(
                         // Save and Continue button
                         Button(
                             onClick = {
+                                // Create PregnancyHistory object from form inputs
+                                val pregnancyHistoryObject = PregnancyHistory(
+                                    numberOfPregnancies = numberOfPregnancies.toInt(),
+                                    numberOfLiveBirths = numberOfLiveBirths.toInt(),
+                                    numberOfAbortions = numberOfAbortions.toInt(),
+                                    numberOfChildDeaths = numberOfChildDeaths.toInt(),
+                                    numberOfDeliveries = numberOfDeliveries.toInt(),
+                                    lastDeliveryDate = if (lastDeliveryDate.isBlank()) "N/A" else lastDeliveryDate
+
+                                )
+
+                                // Pass the object to viewModel to store in LiveData
+                                viewModel.updatePregnancyHistory(pregnancyHistoryObject)
+
                                 println("Save & Continue button clicked") // Debug log
-                                println("Current pregnancyHistory: $pregnancyHistory") // Debug log
+                                println("Current pregnancyHistory: $pregnancyHistoryObject") // Debug log
 
                                 // Save the complete medical history
                                 viewModel.saveMedicalHistory(userId)
@@ -369,6 +343,4 @@ fun MedicalHistoryScreenTwo(
             }
         }
     }
-
-
 }

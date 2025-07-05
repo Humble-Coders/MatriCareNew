@@ -31,46 +31,28 @@ fun MedicalHistoryScreenOne(
     navigateBack: () -> Unit = {},
     navigateToScreenTwo: () -> Unit = {},
     viewModel: MedicalHistoryViewModel = viewModel()
-
 ) {
-    val personalInfo by viewModel.personalInfo.observeAsState(PersonalInformation())
     val isLoading by viewModel.isLoading.observeAsState(false)
     val error by viewModel.error.observeAsState()
 
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    val screenWidth = configuration.screenWidthDp.dp
+
 
     val pinkColor = Color(0xFFFF6B9B)
     val lightGrayBg = Color(0xFFF5F5F7)
 
-    // Initialize form fields with existing data from ViewModel
-    var age by remember { mutableStateOf(if (personalInfo.age == 0) "" else personalInfo.age.toString()) }
-    var systolicBP by remember { mutableStateOf(if (personalInfo.systolicBloodPressure == 0) "" else personalInfo.systolicBloodPressure.toString()) }
-    var diastolicBP by remember { mutableStateOf(if (personalInfo.diastolicBloodPressure == 0) "" else personalInfo.diastolicBloodPressure.toString()) }
-    var glucose by remember { mutableStateOf(if (personalInfo.glucose == 0.0) "" else personalInfo.glucose.toString()) }
-    var respirationRate by remember { mutableStateOf(if (personalInfo.respirationRate == 0) "" else personalInfo.respirationRate.toString()) }
-    var bodyTemperature by remember { mutableStateOf(if (personalInfo.bodyTemperature == 0.0) "" else personalInfo.bodyTemperature.toString()) }
-    var pulseRate by remember { mutableStateOf(if (personalInfo.pulseRate == 0) "" else personalInfo.pulseRate.toString()) }
-    var hemoglobinLevel by remember { mutableStateOf(if (personalInfo.hemoglobinLevel == 0.0) "" else personalInfo.hemoglobinLevel.toString()) }
-
-    // Update form fields when personalInfo changes
-    LaunchedEffect(personalInfo) {
-        age = if (personalInfo.age == 0) "" else personalInfo.age.toString()
-        systolicBP = if (personalInfo.systolicBloodPressure == 0) "" else personalInfo.systolicBloodPressure.toString()
-        diastolicBP = if (personalInfo.diastolicBloodPressure == 0) "" else personalInfo.diastolicBloodPressure.toString()
-        glucose = if (personalInfo.glucose == 0.0) "" else personalInfo.glucose.toString()
-        respirationRate = if (personalInfo.respirationRate == 0) "" else personalInfo.respirationRate.toString()
-        bodyTemperature = if (personalInfo.bodyTemperature == 0.0) "" else personalInfo.bodyTemperature.toString()
-        pulseRate = if (personalInfo.pulseRate == 0) "" else personalInfo.pulseRate.toString()
-        hemoglobinLevel = if (personalInfo.hemoglobinLevel == 0.0) "" else personalInfo.hemoglobinLevel.toString()
-    }
+    // Simple float/int mutable states for form inputs
+    var age by remember { mutableFloatStateOf(0f) }
+    var systolicBP by remember { mutableFloatStateOf(0f) }
+    var diastolicBP by remember { mutableFloatStateOf(0f) }
+    var glucose by remember { mutableFloatStateOf(0f) }
+    var respirationRate by remember { mutableFloatStateOf(0f) }
+    var bodyTemperature by remember { mutableFloatStateOf(0f) }
+    var pulseRate by remember { mutableFloatStateOf(0f) }
+    var hemoglobinLevel by remember { mutableFloatStateOf(0f) }
 
     // Show error message if any
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
-            // You can show a snackbar or toast here
-            // For now, we'll just print it (you can replace with proper error handling)
             println("Error: $errorMessage")
         }
     }
@@ -164,13 +146,9 @@ fun MedicalHistoryScreenOne(
                     // Medical input fields with OutlinedTextField
                     item {
                         OutlinedTextField(
-                            value = age,
+                            value = if (age == 0f) "" else age.toInt().toString(),
                             onValueChange = { newValue ->
-                                age = newValue
-                                val ageInt = newValue.toIntOrNull() ?: 0
-                                val updatedPersonalInfo = personalInfo.copy(age = ageInt)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Age updated: $ageInt") // Debug log
+                                age = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Age") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -185,13 +163,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = systolicBP,
+                            value = if (systolicBP == 0f) "" else systolicBP.toInt().toString(),
                             onValueChange = { newValue ->
-                                systolicBP = newValue
-                                val systolicInt = newValue.toIntOrNull() ?: 0
-                                val updatedPersonalInfo = personalInfo.copy(systolicBloodPressure = systolicInt)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Systolic BP updated: $systolicInt") // Debug log
+                                systolicBP = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Systolic Blood Pressure") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -206,13 +180,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = diastolicBP,
+                            value = if (diastolicBP == 0f) "" else diastolicBP.toInt().toString(),
                             onValueChange = { newValue ->
-                                diastolicBP = newValue
-                                val diastolicInt = newValue.toIntOrNull() ?: 0
-                                val updatedPersonalInfo = personalInfo.copy(diastolicBloodPressure = diastolicInt)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Diastolic BP updated: $diastolicInt") // Debug log
+                                diastolicBP = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Diastolic Blood Pressure") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -227,13 +197,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = glucose,
+                            value = if (glucose == 0f) "" else glucose.toString(),
                             onValueChange = { newValue ->
-                                glucose = newValue
-                                val glucoseDouble = newValue.toDoubleOrNull() ?: 0.0
-                                val updatedPersonalInfo = personalInfo.copy(glucose = glucoseDouble)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Glucose updated: $glucoseDouble") // Debug log
+                                glucose = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Glucose") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -248,13 +214,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = respirationRate,
+                            value = if (respirationRate == 0f) "" else respirationRate.toInt().toString(),
                             onValueChange = { newValue ->
-                                respirationRate = newValue
-                                val respirationInt = newValue.toIntOrNull() ?: 0
-                                val updatedPersonalInfo = personalInfo.copy(respirationRate = respirationInt)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Respiration Rate updated: $respirationInt") // Debug log
+                                respirationRate = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Respiration Rate") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -269,13 +231,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = bodyTemperature,
+                            value = if (bodyTemperature == 0f) "" else bodyTemperature.toString(),
                             onValueChange = { newValue ->
-                                bodyTemperature = newValue
-                                val tempDouble = newValue.toDoubleOrNull() ?: 0.0
-                                val updatedPersonalInfo = personalInfo.copy(bodyTemperature = tempDouble)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Body Temperature updated: $tempDouble") // Debug log
+                                bodyTemperature = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Body Temperature (F)") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -290,13 +248,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = pulseRate,
+                            value = if (pulseRate == 0f) "" else pulseRate.toInt().toString(),
                             onValueChange = { newValue ->
-                                pulseRate = newValue
-                                val pulseInt = newValue.toIntOrNull() ?: 0
-                                val updatedPersonalInfo = personalInfo.copy(pulseRate = pulseInt)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Pulse Rate updated: $pulseInt") // Debug log
+                                pulseRate = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Pulse Rate") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -311,13 +265,9 @@ fun MedicalHistoryScreenOne(
 
                     item {
                         OutlinedTextField(
-                            value = hemoglobinLevel,
+                            value = if (hemoglobinLevel == 0f) "" else hemoglobinLevel.toString(),
                             onValueChange = { newValue ->
-                                hemoglobinLevel = newValue
-                                val hemoglobinDouble = newValue.toDoubleOrNull() ?: 0.0
-                                val updatedPersonalInfo = personalInfo.copy(hemoglobinLevel = hemoglobinDouble)
-                                viewModel.updatePersonalInfo(updatedPersonalInfo)
-                                println("Hemoglobin Level updated: $hemoglobinDouble") // Debug log
+                                hemoglobinLevel = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Hemoglobin Level") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -332,23 +282,25 @@ fun MedicalHistoryScreenOne(
 
                     // Button and bottom spacing
                     item {
-                        // Save immediately and then navigate
                         Button(
                             onClick = {
-                                println("Continue button clicked") // Debug log
-                                println("Current personalInfo: $personalInfo") // Debug log
+                                // Create PersonalInformation object from form inputs
+                                val personalInfoObject = PersonalInformation(
+                                    age = age.toInt(),
+                                    systolicBloodPressure = systolicBP.toInt(),
+                                    diastolicBloodPressure = diastolicBP.toInt(),
+                                    glucose = glucose.toDouble(),
+                                    respirationRate = respirationRate.toInt(),
+                                    bodyTemperature = bodyTemperature.toDouble(),
+                                    pulseRate = pulseRate.toInt(),
+                                    hemoglobinLevel = hemoglobinLevel.toDouble()
+                                )
 
-                                // Save personal information before navigating
-                                if (viewModel.isPersonalInfoValid()) {
-//                                    viewModel.savePersonalInfo(userId) {
-//                                        // Navigate after successful save
-//                                        navigateToScreenTwo()
-//                                    }
-                                    navigateToScreenTwo()
-                                } else {
-                                    // Show validation error
-                                    println("Personal info validation failed")
-                                }
+                                // Pass the object to viewModel to store in LiveData
+                                viewModel.updatePersonalInfo(personalInfoObject)
+
+                                // Navigate to next screen
+                                navigateToScreenTwo()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -358,10 +310,9 @@ fun MedicalHistoryScreenOne(
                                 containerColor = pinkColor
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            enabled = !isLoading // Disable button when loading
+                            enabled = !isLoading
                         ) {
                             if (isLoading) {
-
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
                                     color = Color.White,
@@ -381,30 +332,6 @@ fun MedicalHistoryScreenOne(
                     }
                 }
             }
-
-//            // Loading overlay
-//            if (isLoading) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(Color.Black.copy(alpha = 0.3f)),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Card(
-//                        modifier = Modifier.padding(32.dp),
-//                        colors = CardDefaults.cardColors(containerColor = Color.White)
-//                    ) {
-//                        Column(
-//                            modifier = Modifier.padding(24.dp),
-//                            horizontalAlignment = Alignment.CenterHorizontally
-//                        ) {
-//                            CircularProgressIndicator(color = pinkColor)
-//                            Spacer(modifier = Modifier.height(16.dp))
-//                            Text("Saving your information...")
-//                        }
-//                    }
-//                }
-//            }
         }
     }
 }

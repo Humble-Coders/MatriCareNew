@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.ChartData
 import com.example.matricareog.HealthDataPoint
 import com.example.matricareog.MatriCareState
@@ -35,7 +37,8 @@ import com.github.mikephil.charting.utils.ColorTemplate
 @Composable
 fun MatriCareScreen(
     onBackClick: () -> Unit,
-    viewModel: MatriCareViewModel = hiltViewModel()
+     viewModel: MatriCareViewModel = viewModel()
+
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()

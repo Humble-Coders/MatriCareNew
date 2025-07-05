@@ -55,14 +55,15 @@ data class PregnancyHistory(
     val lastDeliveryDate: String = "" // Format: "dd/MM/yyyy"
 )
 
+
 data class MedicalHistory(
     val userId: String = "",
     val personalInformation: PersonalInformation = PersonalInformation(),
     val pregnancyHistory: PregnancyHistory = PregnancyHistory(),
-    val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
+    val documentId: String = "" // This will be set when retrieving from Firestore
 )
-
 
 
 // Data Classes
