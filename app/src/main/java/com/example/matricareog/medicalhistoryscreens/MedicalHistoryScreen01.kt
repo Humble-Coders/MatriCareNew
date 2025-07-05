@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.PersonalInformation
+import com.example.matricareog.Routes
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -339,11 +340,11 @@ fun MedicalHistoryScreenOne(
 
                                 // Save personal information before navigating
                                 if (viewModel.isPersonalInfoValid()) {
-                                    viewModel.savePersonalInfo(userId) {
-                                        // Navigate after successful save
-
-                                        navigateToScreenTwo()
-                                    }
+//                                    viewModel.savePersonalInfo(userId) {
+//                                        // Navigate after successful save
+//                                        navigateToScreenTwo()
+//                                    }
+                                    navigateToScreenTwo()
                                 } else {
                                     // Show validation error
                                     println("Personal info validation failed")

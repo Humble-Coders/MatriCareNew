@@ -81,38 +81,43 @@ class MedicalHistoryViewModel : ViewModel() {
     }
 
     // Save complete medical history (for Screen Two)
-    fun saveMedicalHistory(userId: String, onSuccess: () -> Unit = {}) {
+
+    fun saveMedicalHistory(userId: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
             try {
-                _isLoading.value = true
-                _error.value = null
-                _saveSuccess.value = false
+                // Get current values from LiveData
+                val currentPersonalInfo = _personalInfo.value ?: PersonalInformation()
+                val currentPregnancyHistory = _pregnancyHistory.value ?: PregnancyHistory()
 
-                val personalInfo = _personalInfo.value ?: PersonalInformation()
-                val pregnancyHistory = _pregnancyHistory.value ?: PregnancyHistory()
+                // Debug logs
+                println("Saving Personal Info: $currentPersonalInfo")
+                println("Saving Pregnancy History: $currentPregnancyHistory")
 
-                println("Saving complete medical history for user: $userId") // Debug log
-                println("Personal Info: $personalInfo") // Debug log
-                println("Pregnancy History: $pregnancyHistory") // Debug log
+                // Save both personal info and pregnancy history
+                val result = repository.saveMedicalHistory(
+                    userId = userId,
+                    personalInfo = currentPersonalInfo,
+                    pregnancyHistory = currentPregnancyHistory
+                )
 
-                val result = repository.saveMedicalHistory(userId, personalInfo, pregnancyHistory)
-
-                result.onSuccess { message ->
-                    _error.value = null
-                    _saveSuccess.value = true
-                    println("Complete medical history save successful: $message") // Debug log
-                    onSuccess() // Call the success callback
-                }.onFailure { exception ->
-                    _error.value = exception.message
-                    _saveSuccess.value = false
-                    println("Complete medical history save failed: ${exception.message}") // Debug log
-                }
-
+                result.fold(
+                    onSuccess = { message ->
+                        println("Save successful: $message")
+                        _isLoading.value = false
+                        // You might want to emit a success event here
+                    },
+                    onFailure = { exception ->
+                        println("Save failed: ${exception.message}")
+                        _error.value = exception.message
+                        _isLoading.value = false
+                    }
+                )
             } catch (e: Exception) {
+                println("Exception during save: ${e.message}")
                 _error.value = e.message
-                _saveSuccess.value = false
-                println("Exception during complete save: ${e.message}") // Debug log
-            } finally {
                 _isLoading.value = false
             }
         }

@@ -39,7 +39,7 @@ fun MedicalHistoryScreenTwo(
     val error by viewModel.error.observeAsState()
 
     // State for showing success message
-    var showSuccessDialog by remember { mutableStateOf(false) }
+
 
     // Initialize form fields with existing data from ViewModel
     var numberOfPregnancies by remember { mutableStateOf(if (pregnancyHistory.numberOfPregnancies == 0) "" else pregnancyHistory.numberOfPregnancies.toString()) }
@@ -67,24 +67,7 @@ fun MedicalHistoryScreenTwo(
         }
     }
 
-    // Success Dialog
-    if (showSuccessDialog) {
-        AlertDialog(
-            onDismissRequest = { showSuccessDialog = false },
-            title = { Text("Success") },
-            text = { Text("Medical history saved successfully!") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showSuccessDialog = false
-                        onContinuePressed()
-                    }
-                ) {
-                    Text("Continue")
-                }
-            }
-        )
-    }
+
 
     Scaffold(
         topBar = {
@@ -387,12 +370,5 @@ fun MedicalHistoryScreenTwo(
         }
     }
 
-    // Handle save success
-    LaunchedEffect(isLoading, error) {
-        if (!isLoading && error == null) {
-            // Check if we just finished saving (you might need to add a success state to ViewModel)
-            // For now, we'll show success after save operation completes
-            showSuccessDialog = true
-        }
-    }
+
 }

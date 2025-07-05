@@ -77,6 +77,7 @@ dependencies {
 
     // --- Compose Core Dependencies ---
     implementation("androidx.compose.ui:ui")
+    //
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material:material")
     implementation("androidx.compose.material:material-icons-extended:1.6.8") // Needed explicitly

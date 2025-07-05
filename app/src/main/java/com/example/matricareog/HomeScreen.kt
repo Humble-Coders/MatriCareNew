@@ -90,6 +90,9 @@ fun HomeScreen(
                         if (card.title == "Refer the maternal guide") {
                             onMaternalGuideClicked()
                         }
+                        if (card.title == "Report History") {
+                            onMaternalGuideClicked()
+                        }
                     }
                 )
             }
@@ -191,7 +194,7 @@ private val featureCards = listOf(
     FeatureCardData("Track your health with AI", "Personalized health monitoring", Color(0xFFF0F4FF), Icons.Default.Done),
     FeatureCardData("Refer the maternal guide", "Expert guidance and tips", Color(0xFFE8FCE9), Icons.Default.Person),
     FeatureCardData("Ask MomBuddy anything!", "24/7 support assistant", Color(0xFFFFEBF0), Icons.Default.Call),
-    FeatureCardData("Community", "Connect with other moms", Color(0xFFFFF4D9), Icons.Default.AccountBox)
+    FeatureCardData("Report History", "see previous records", Color(0xFFFFF4D9), Icons.Default.AccountBox)
 )
 
 private val horizontalFeatureCards = listOf(
