@@ -44,20 +44,7 @@ class MatriCareViewModel : ViewModel() {
         _selectedTab.value = tabIndex
     }
 
-    fun addHealthData(hemoglobin: Double, hba1c: Double, glucose: Double) {
-        viewModelScope.launch {
-            repository.addHealthData(hemoglobin, hba1c, glucose).fold(
-                onSuccess = {
-                    loadChartData()
-                },
-                onFailure = { exception ->
-                    _uiState.value = MatriCareState.Error(
-                        exception.message ?: "Failed to add health data"
-                    )
-                }
-            )
-        }
-    }
+
 
     fun refreshData() {
         loadChartData()

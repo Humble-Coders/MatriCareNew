@@ -20,7 +20,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matricareog.R
-
 @Composable
 fun GetStarted(
     onGetStartedClick: () -> Unit,
@@ -30,39 +29,32 @@ fun GetStarted(
     val lightPinkColor = Color(0xFFFFD6E5)
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 32.dp)
             .background(Color(0xFFFAFAFA))
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top section with logo
+        // Top Section
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 40.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = buildAnnotatedString {
                     withStyle(style = SpanStyle(color = Color.Black)) {
                         append("Matri")
                     }
-                    withStyle(style = SpanStyle(color = Color(0xFFE91E63))) {
+                    withStyle(style = SpanStyle(color = pinkColor)) {
                         append("care")
                     }
                 },
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 60.dp, bottom = 40.dp)
             )
-        }
 
-        // Middle section with image and text
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.weight(1f)
-        ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -92,23 +84,17 @@ fun GetStarted(
                 color = Color.Gray,
                 textAlign = TextAlign.Center,
                 lineHeight = 24.sp,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 80.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 32.dp)
             )
         }
 
-        // Bottom section with indicators and button
+        // Bottom Section
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Bottom,
-            modifier = Modifier.padding(bottom = 20.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Dynamic page indicators
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 40.dp)
+                modifier = Modifier.padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 repeat(4) { index ->
                     Box(
@@ -129,21 +115,20 @@ fun GetStarted(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .padding(bottom = 20.dp)
+                    .padding(bottom = 20.dp),
+                contentPadding = PaddingValues()
             ) {
-                Text(
-                    text = "Get Started",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.White
-                )
-            }
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Get Started",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

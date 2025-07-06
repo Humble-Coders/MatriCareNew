@@ -96,6 +96,9 @@ fun LoginSignupopt(
                     .fillMaxWidth()
                     .height(52.dp)
                     .padding(bottom = 12.dp)
+            ) { Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "Sign Up",
@@ -105,6 +108,7 @@ fun LoginSignupopt(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
             }
 
             // Log In Button
@@ -120,6 +124,9 @@ fun LoginSignupopt(
                     .fillMaxWidth()
                     .height(52.dp)
                     .padding(bottom = 12.dp)
+            ) {Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "Log In",
@@ -129,6 +136,7 @@ fun LoginSignupopt(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+            }
             }
 
             // Terms and Privacy text

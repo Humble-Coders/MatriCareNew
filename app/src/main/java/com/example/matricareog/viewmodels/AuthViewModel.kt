@@ -84,11 +84,11 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun logout() {
-        userRepository.logout()
-        _currentUser.value = null
-        _authState.value = AuthResult.Error("Not authenticated")
-    }
+//    fun logout() {
+//        userRepository.logout()
+//        _currentUser.value = null
+//        _authState.value = AuthResult.Error("Not authenticated")
+//    }
 
     fun clearAuthState() {
         _authState.value = AuthResult.Idle

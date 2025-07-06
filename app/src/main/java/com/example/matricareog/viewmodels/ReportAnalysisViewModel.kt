@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 import android.util.Log
 
 class ReportViewModel : ViewModel() {
-    private val repository = ReportRepository() // Internal dependency (same as MedicalHistoryViewModel)
+    private val repository =
+        ReportRepository() // Internal dependency (same as MedicalHistoryViewModel)
 
     // State for Health Report
     private val _healthReport = MutableLiveData<HealthReport?>()
@@ -82,7 +83,10 @@ class ReportViewModel : ViewModel() {
                 val healthReportResult = healthReportDeferred.await()
                 val medicalHistoryResult = medicalHistoryDeferred.await()
 
-                Log.d(TAG, "Results received - HealthReport success: ${healthReportResult.isSuccess}, MedicalHistory success: ${medicalHistoryResult.isSuccess}")
+                Log.d(
+                    TAG,
+                    "Results received - HealthReport success: ${healthReportResult.isSuccess}, MedicalHistory success: ${medicalHistoryResult.isSuccess}"
+                )
 
                 _healthReport.value = healthReportResult.getOrNull().also {
                     Log.d(TAG, "HealthReport value set: ${it != null}")
@@ -110,21 +114,7 @@ class ReportViewModel : ViewModel() {
         }
     }
 
-    // Fetch ML prediction separately
-    fun fetchMLPrediction(userId: String) {
-        viewModelScope.launch {
-            try {
-                val result = repository.getMlPrediction(userId)
-                _mlPrediction.value = result.getOrNull()
 
-                if (result.isFailure) {
-                    _error.value = "ML prediction failed: ${result.exceptionOrNull()?.message}"
-                }
-            } catch (e: Exception) {
-                _error.value = "Error getting ML prediction: ${e.message}"
-            }
-        }
-    }
 
     // Fetch all data including ML prediction
     fun fetchAllData(userId: String) {
@@ -150,29 +140,5 @@ class ReportViewModel : ViewModel() {
                 _isLoading.value = false
             }
         }
-    }
-
-    // Clear error state (matches MedicalHistoryViewModel's clearError)
-    fun clearError() {
-        _error.value = null
-    }
-
-    // Debug function to print current state (similar to getCurrentPersonalInfo)
-    fun getCurrentReport(): HealthReport? {
-        return _healthReport.value?.also { report ->
-            println("$TAG: Current report state: $report")
-        }
-    }
-
-    // Get current ML prediction
-    fun getCurrentMLPrediction(): ReportRepository.RiskPrediction? {
-        return _mlPrediction.value?.also { prediction ->
-            println("$TAG: Current ML prediction: $prediction")
-        }
-    }
-
-    // Check if ML features are available
-    fun isMLReady(): Boolean {
-        return _isModelReady.value == true
     }
 }

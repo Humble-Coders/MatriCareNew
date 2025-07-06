@@ -103,10 +103,10 @@ class UserRepository {
             AuthResult.Error(getErrorMessage(e))
         }
     }
-
-    fun logout() {
-        auth.signOut()
-    }
+//
+//    fun logout() {
+//        auth.signOut()
+//    }
 
     fun isUserLoggedIn(): Boolean {
         return auth.currentUser != null

@@ -29,11 +29,10 @@ fun WelcomeScreenone(
     onNextClicked: () -> Unit,
     currentPageIndex: Int
 ) {
-    // Define colors
     val pinkColor = Color(0xFFEF5DA8)
     val lightPinkColor = Color(0xFFFFD6E5)
-    val backgroundCircleColor1 = Color(0xFFF0F4FF)  // Light blue
-    val backgroundCircleColor2 = Color(0xFFFFF0F7)  // Very light pink
+    val backgroundCircleColor1 = Color(0xFFF0F4FF)
+    val backgroundCircleColor2 = Color(0xFFFFF0F7)
 
     Box(
         modifier = Modifier
@@ -41,7 +40,7 @@ fun WelcomeScreenone(
             .background(Color.White)
             .padding(24.dp)
     ) {
-        // Background decoration circles (subtle)
+        // Decorative circles
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -62,119 +61,110 @@ fun WelcomeScreenone(
 
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
-
-            // Logo text
-            Row(
-                modifier = Modifier.padding(bottom = 40.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Top section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Matri",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = "care",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = pinkColor
-                )
-            }
-
-            // Circular image
-            Image(
-                painter = painterResource(id = R.drawable.welcomescreen01),
-                contentDescription = "Pregnant woman",
-                modifier = Modifier
-                    .size(280.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Welcome text
-            Text(
-                text = "Welcome",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Description text
-            Text(
-                text = "Welcome to Matricare, your companion through every step of your pregnancy journey.",
-                fontSize = 16.sp,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Pagination dots
-            Row(
-                modifier = Modifier.padding(bottom = 40.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                repeat(4) { index ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (index == currentPageIndex) 10.dp else 8.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (index == currentPageIndex) Color(0xFFEF5DA8) // pinkColor
-                                else Color(0xFFFFD6E5) // lightPinkColor
-                            )
-                    )
-                }
-            }
-
-            // Bottom buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Skip button
-                TextButton(
-                    onClick = onSkipClicked
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 60.dp, bottom = 40.dp)
                 ) {
                     Text(
-                        text = "SKIP",
-                        color = Color.Gray,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                // Next button
-                Button(
-                    onClick = onNextClicked,
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = pinkColor
-                    ),
-                    shape = RoundedCornerShape(25.dp)
-                ) {
-                    Text(
-                        text = "NEXT",
-                        fontSize = 16.sp,
+                        text = "Matri",
+                        fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "care",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = pinkColor
                     )
                 }
+
+                Image(
+                    painter = painterResource(id = R.drawable.welcomescreen01),
+                    contentDescription = "Pregnant woman",
+                    modifier = Modifier
+                        .size(280.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+
+                Text(
+                    text = "Welcome",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(top = 32.dp)
+                )
+
+                Text(
+                    text = "Welcome to Matricare, your companion through every step of your pregnancy journey.",
+                    fontSize = 16.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                )
             }
 
+            // Bottom section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    repeat(4) { index ->
+                        Box(
+                            modifier = Modifier
+                                .size(if (index == currentPageIndex) 10.dp else 8.dp)
+                                .clip(CircleShape)
+                                .background(if (index == currentPageIndex) pinkColor else lightPinkColor)
+                        )
+                    }
+                }
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onSkipClicked) {
+                        Text(
+                            text = "SKIP",
+                            color = Color.Gray,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Button(
+                        onClick = onNextClicked,
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = pinkColor
+                        ),
+                        shape = RoundedCornerShape(25.dp)
+                    ) {
+                        Text(
+                            text = "NEXT",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
         }
     }
 }
