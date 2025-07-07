@@ -107,6 +107,10 @@ class MedicalHistoryRepository(
     /**
      * Save complete data including ML predictions to Firebase
      */
+    /**
+     * Save complete data with ML predictions to Firebase
+     * Now saves directly to medical_history collection with auto-generated ID
+     */
     suspend fun saveCompleteDataWithMLPredictions(
         userId: String,
         personalInfo: PersonalInformation,
@@ -115,12 +119,12 @@ class MedicalHistoryRepository(
     ): Result<String> {
         return try {
             val timestamp = System.currentTimeMillis()
-            val documentId = UUID.randomUUID().toString()
 
             // Create MedicalHistory object with ML prediction data
             val medicalHistory = MedicalHistory(
-                id = documentId,
+                id = "", // Will be set by Firestore auto-generated ID
                 userId = userId,
+                date = timestamp,
                 personalInformation = personalInfo,
                 pregnancyHistory = pregnancyHistory,
                 timestamp = timestamp,
@@ -129,28 +133,27 @@ class MedicalHistoryRepository(
                 mlPredictionTimestamp = if (mlPrediction != null) System.currentTimeMillis() else null
             )
 
-            // Save to Firebase
+            // Save to Firebase using add() for auto-generated ID
             val documentRef = firestore.collection("medical_history")
-                .document(userId)
-                .collection("records")
-                .document(documentId)
+                .add(medicalHistory)
+                .await()
 
-            documentRef.set(medicalHistory).await()
+            // Get the auto-generated document ID
+            val generatedId = documentRef.id
 
-            Result.success("Complete data with ML predictions saved successfully. Document ID: $documentId")
+            Result.success("Complete data with ML predictions saved successfully. Document ID: $generatedId")
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     /**
-     * Get medical history list ordered by date (most recent first)
+     * Get medical history list for a specific user, ordered by date (most recent first)
      */
     suspend fun getMedicalHistoryList(userId: String): Result<List<MedicalHistory>> {
         return try {
             val snapshot = firestore.collection("medical_history")
-                .document(userId)
-                .collection("records")
+                .whereEqualTo("userId", userId)
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .get()
                 .await()
@@ -166,13 +169,11 @@ class MedicalHistoryRepository(
     }
 
     /**
-     * Get specific medical history record by ID
+     * Get specific medical history record by auto-generated ID
      */
-    suspend fun getMedicalHistoryById(userId: String, recordId: String): Result<MedicalHistory> {
+    suspend fun getMedicalHistoryById(recordId: String): Result<MedicalHistory> {
         return try {
             val document = firestore.collection("medical_history")
-                .document(userId)
-                .collection("records")
                 .document(recordId)
                 .get()
                 .await()

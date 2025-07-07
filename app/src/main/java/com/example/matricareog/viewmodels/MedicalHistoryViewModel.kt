@@ -208,7 +208,7 @@ class MedicalHistoryViewModel(
                 _isLoading.value = true
                 _error.value = null
 
-                val result = repository.getMedicalHistoryById(userId, recordId)
+                val result = repository.getMedicalHistoryById( recordId)
 
                 result.onSuccess { medicalHistory ->
                     _currentMedicalHistory.value = medicalHistory

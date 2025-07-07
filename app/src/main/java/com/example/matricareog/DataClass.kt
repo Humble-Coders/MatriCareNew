@@ -67,7 +67,8 @@ data class MedicalHistory(
     val createdAt: Long = System.currentTimeMillis(),   // explicitly for creation
     val updatedAt: Long = System.currentTimeMillis(),   // explicitly for last update
     val timestamp: Long = System.currentTimeMillis(),   // still keep generic timestamp if needed
-
+   
+    val date: Long = System.currentTimeMillis(), //
     // ML prediction fields
     val mlRiskLevel: String? = null,
     val mlRiskScore: Float? = null,           // changed to Float? to match your mlPrediction?.riskScore
