@@ -2,6 +2,7 @@ package com.example.matricareog
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,53 +31,54 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
+import com.example.matricareog.viewmodels.MatriCareViewModel
 
 @Composable
 fun HomeScreen(
+    matriCareViewModel: MatriCareViewModel,
+    onNavigateToMedicalHistory: (String) -> Unit = {},
+    onNavigateToReports: (String) -> Unit = {},
     onTrackHealthClicked: () -> Unit = {},
     onMaternalGuideClicked: () -> Unit = {},
     onReportHistoryClicked: () -> Unit = {}
-) {
-    // Get configuration for screen dimensions
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    val screenWidth = configuration.screenWidthDp.dp
+)
+{
+    // You can later extract user data from matriCareViewModel.uiState if needed
+    val userName = "Sarah" // dummy
+    val userId = "dummyUserId" // replace with real userId later
 
-    // Static user data for UI display
-    val userName = "Sarah"
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(top = 12.dp)
-                .padding(bottom = 65.dp) // Increased padding for bottom navigation
+                .padding(top = 12.dp, bottom = 65.dp)
                 .statusBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(10.dp) // Increased spacing between items
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
                 TopBar()
-                Spacer(modifier = Modifier.height(12.dp)) // Increased space after top bar
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
             item {
                 Text(
                     text = "Good Morning,",
-                    fontSize = 24.sp, // Increased font size
+                    fontSize = 24.sp,
                     color = Color.Black
                 )
                 Text(
                     text = userName,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp, // Increased font size
+                    fontSize = 28.sp,
                     color = Color(0xFFE91E63)
                 )
-                Spacer(modifier = Modifier.height(12.dp)) // Increased spacing
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Feature cards list
             items(featureCards) { card ->
                 FeatureCard(
                     title = card.title,
@@ -85,14 +87,13 @@ fun HomeScreen(
                     icon = card.icon,
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        if (card.title == "Track your health with AI") {
-                            onTrackHealthClicked()
-                        }
-                        if (card.title == "Refer the maternal guide") {
-                            onMaternalGuideClicked()
-                        }
-                        if (card.title == "Report History") {
-                            onReportHistoryClicked()
+                        when (card.title) {
+                            "Track your health with AI" -> onTrackHealthClicked()
+                            "Refer the maternal guide" -> onMaternalGuideClicked()
+                            "Report History" -> {
+                                onReportHistoryClicked()
+                                onNavigateToReports(userId) // uses callback
+                            }
                         }
                     }
                 )
@@ -105,9 +106,7 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(horizontalFeatureCards) { card ->
-                        // Make horizontal cards wider
                         val cardWidth = (screenWidth * 0.68f).coerceAtMost(240.dp)
-
                         FeatureCard(
                             title = card.title,
                             subtitle = card.subtitle,
@@ -118,8 +117,6 @@ fun HomeScreen(
                         )
                     }
                 }
-
-                // Add a spacer at the bottom to ensure content isn't cut off
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -146,26 +143,26 @@ fun FeatureCard(
             .clickable(onClick = onClick),
         backgroundColor = bgColor,
         shape = RoundedCornerShape(20.dp),
-        elevation = 2.dp // Added slight elevation for better visibility
+        elevation = 2.dp
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp) // Increased padding
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.DarkGray,
-                modifier = Modifier.size(30.dp) // Larger icon
+                modifier = Modifier.size(30.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp // Increased font size
+                fontSize = 18.sp
             )
             Text(
                 text = subtitle,
-                fontSize = 14.5.sp, // Increased font size
+                fontSize = 14.5.sp,
                 color = Color.Gray
             )
 
@@ -175,7 +172,7 @@ fun FeatureCard(
                     text = it,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF2E7D32),
-                    fontSize = 15.sp // Increased font size
+                    fontSize = 15.sp
                 )
             }
         }
@@ -190,7 +187,6 @@ data class FeatureCardData(
     val extraActionText: String? = null
 )
 
-// Define feature cards as constants to avoid recreating them in the composable
 private val featureCards = listOf(
     FeatureCardData("Track your health with AI", "Personalized health monitoring", Color(0xFFF0F4FF), Icons.Default.Done),
     FeatureCardData("Refer the maternal guide", "Expert guidance and tips", Color(0xFFE8FCE9), Icons.Default.Person),
@@ -214,7 +210,6 @@ fun TopBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Default profile image
             Image(
                 painter = painterResource(id = R.drawable.user),
                 contentDescription = "Default Profile",
@@ -252,8 +247,8 @@ fun BottomNavigationBar(
 ) {
     BottomNavigation(
         backgroundColor = Color.White,
-        elevation = 12.dp, // Increased elevation
-        modifier = modifier.height(60.dp) // Increased height for better visibility
+        elevation = 12.dp,
+        modifier = modifier.height(60.dp)
     ) {
         BottomNavigationItem(
             selected = true,
@@ -263,51 +258,33 @@ fun BottomNavigationBar(
                     Icons.Default.Home,
                     contentDescription = null,
                     tint = Color(0xFFE91E63),
-                    modifier = Modifier.size(26.dp) // Larger icon
+                    modifier = Modifier.size(26.dp)
                 )
             },
             label = {
                 MaterialText(
                     "Home",
                     color = Color(0xFFE91E63),
-                    fontSize = 12.sp // Increased text size
+                    fontSize = 12.sp
                 )
             }
         )
         BottomNavigationItem(
             selected = false,
             onClick = {},
-            icon = {
-                MaterialIcon(
-                    Icons.Outlined.FavoriteBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp)
-                )
-            },
+            icon = { MaterialIcon(Icons.Outlined.FavoriteBorder, null, Modifier.size(26.dp)) },
             label = { MaterialText("Favorites", fontSize = 12.sp) }
         )
         BottomNavigationItem(
             selected = false,
             onClick = {},
-            icon = {
-                MaterialIcon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp)
-                )
-            },
+            icon = { MaterialIcon(Icons.Default.Person, null, Modifier.size(26.dp)) },
             label = { MaterialText("Community", fontSize = 12.sp) }
         )
         BottomNavigationItem(
             selected = false,
             onClick = {},
-            icon = {
-                MaterialIcon(
-                    Icons.Outlined.MailOutline,
-                    contentDescription = null,
-                    modifier = Modifier.size(26.dp)
-                )
-            },
+            icon = { MaterialIcon(Icons.Outlined.MailOutline, null, Modifier.size(26.dp)) },
             label = { MaterialText("Guide", fontSize = 12.sp) }
         )
     }

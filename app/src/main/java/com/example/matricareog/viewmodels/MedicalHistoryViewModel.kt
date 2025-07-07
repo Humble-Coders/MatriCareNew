@@ -8,10 +8,12 @@ import com.example.matricareog.MedicalHistory
 import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.repository.MedicalHistoryRepository
+import com.example.matricareog.repository.ReportRepository
 import kotlinx.coroutines.launch
 
-class MedicalHistoryViewModel : ViewModel() {
-    private val repository = MedicalHistoryRepository()
+class MedicalHistoryViewModel(
+    private val repository: MedicalHistoryRepository
+) : ViewModel() {
 
     // State for Personal Information Screen
     private val _personalInfo = MutableLiveData(PersonalInformation())
@@ -45,6 +47,10 @@ class MedicalHistoryViewModel : ViewModel() {
     private val _saveMessage = MutableLiveData<String?>()
     val saveMessage: LiveData<String?> = _saveMessage
 
+    // State for complete data save (including ML predictions)
+    private val _completeDataSaved = MutableLiveData<Boolean>()
+    val completeDataSaved: LiveData<Boolean> = _completeDataSaved
+
     // Update personal information
     fun updatePersonalInfo(personalInfo: PersonalInformation) {
         _personalInfo.value = personalInfo
@@ -57,11 +63,30 @@ class MedicalHistoryViewModel : ViewModel() {
         println("PregnancyHistory updated in ViewModel: $pregnancyHistory") // Debug log
     }
 
-    // Save complete medical history (for Screen Two)
-    fun saveMedicalHistory(userId: String) {
+    // Store medical history in LiveData (NO Firebase save - just in-memory storage)
+    fun storeMedicalHistoryInLiveData(personalInfo: PersonalInformation, pregnancyHistory: PregnancyHistory) {
+        _personalInfo.value = personalInfo
+        _pregnancyHistory.value = pregnancyHistory
+
+        // Debug logs
+        println("Medical History stored in LiveData:")
+        println("Personal Info: $personalInfo")
+        println("Pregnancy History: $pregnancyHistory")
+
+        // Set success state to indicate data is ready for ML processing
+        _saveSuccess.value = true
+        _saveMessage.value = "Medical history ready for analysis"
+    }
+
+    // SINGLE COMPLETE SAVE: Save everything to Firebase (PersonalInfo + PregnancyHistory + ML Predictions)
+    fun saveCompleteDataToFirebase(
+        userId: String,
+        mlPrediction: ReportRepository.RiskPrediction?
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _completeDataSaved.value = false
 
             try {
                 // Get current values from LiveData
@@ -69,20 +94,23 @@ class MedicalHistoryViewModel : ViewModel() {
                 val currentPregnancyHistory = _pregnancyHistory.value ?: PregnancyHistory()
 
                 // Debug logs
-                println("Saving Personal Info: $currentPersonalInfo")
-                println("Saving Pregnancy History: $currentPregnancyHistory")
+                println("FINAL SAVE: Saving complete data to Firebase")
+                println("Personal Info: $currentPersonalInfo")
+                println("Pregnancy History: $currentPregnancyHistory")
+                println("ML Prediction: $mlPrediction")
 
-                // Save both personal info and pregnancy history
-                val result = repository.saveMedicalHistory(
+                // Save complete data including ML predictions to Firebase
+                val result = repository.saveCompleteDataWithMLPredictions(
                     userId = userId,
                     personalInfo = currentPersonalInfo,
-                    pregnancyHistory = currentPregnancyHistory
+                    pregnancyHistory = currentPregnancyHistory,
+                    mlPrediction = mlPrediction
                 )
 
                 result.fold(
                     onSuccess = { message ->
-                        println("Save successful: $message")
-                        _saveSuccess.value = true
+                        println("FINAL SAVE successful: $message")
+                        _completeDataSaved.value = true
                         _saveMessage.value = message
                         _error.value = null
 
@@ -90,15 +118,15 @@ class MedicalHistoryViewModel : ViewModel() {
                         loadMedicalHistoryList(userId)
                     },
                     onFailure = { exception ->
-                        println("Save failed: ${exception.message}")
+                        println("FINAL SAVE failed: ${exception.message}")
                         _error.value = exception.message
-                        _saveSuccess.value = false
+                        _completeDataSaved.value = false
                     }
                 )
             } catch (e: Exception) {
-                println("Exception during save: ${e.message}")
+                println("Exception during FINAL SAVE: ${e.message}")
                 _error.value = e.message
-                _saveSuccess.value = false
+                _completeDataSaved.value = false
             } finally {
                 _isLoading.value = false
             }
@@ -112,7 +140,7 @@ class MedicalHistoryViewModel : ViewModel() {
                 _isLoading.value = true
                 _error.value = null
 
-                val result = repository.getMedicalHistoryOrderedByDate(userId)
+                val result = repository.getMedicalHistoryList(userId)
 
                 result.onSuccess { medicalHistoryList ->
                     _medicalHistoryList.value = medicalHistoryList
@@ -144,4 +172,76 @@ class MedicalHistoryViewModel : ViewModel() {
             }
         }
     }
-   }
+
+    // Get current LiveData values for other ViewModels
+    fun getCurrentPersonalInfo(): PersonalInformation? {
+        return _personalInfo.value
+    }
+
+    fun getCurrentPregnancyHistory(): PregnancyHistory? {
+        return _pregnancyHistory.value
+    }
+
+    // Clear success states
+    fun clearSaveSuccess() {
+        _saveSuccess.value = false
+        _completeDataSaved.value = false
+        _saveMessage.value = null
+    }
+
+    // Clear error state
+    fun clearError() {
+        _error.value = null
+    }
+
+    // Reset form data (useful for new entries)
+    fun resetFormData() {
+        _personalInfo.value = PersonalInformation()
+        _pregnancyHistory.value = PregnancyHistory()
+        _currentMedicalHistory.value = null
+    }
+
+    // Load specific medical history record by ID
+    fun loadSpecificMedicalHistory(userId: String, recordId: String) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                _error.value = null
+
+                val result = repository.getMedicalHistoryById(userId, recordId)
+
+                result.onSuccess { medicalHistory ->
+                    _currentMedicalHistory.value = medicalHistory
+                    _personalInfo.value = medicalHistory.personalInformation
+                    _pregnancyHistory.value = medicalHistory.pregnancyHistory
+                    println("Loaded specific medical history: $medicalHistory") // Debug log
+                    _error.value = null
+                }.onFailure { exception ->
+                    _error.value = exception.message
+                    println("Load specific record failed: ${exception.message}") // Debug log
+                }
+
+            } catch (e: Exception) {
+                _error.value = e.message
+                println("Exception during specific record load: ${e.message}") // Debug log
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // Check if current data has unsaved changes
+    fun hasUnsavedChanges(): Boolean {
+        val currentRecord = _currentMedicalHistory.value
+        val currentPersonalInfo = _personalInfo.value
+        val currentPregnancyHistory = _pregnancyHistory.value
+
+        return if (currentRecord != null) {
+            currentRecord.personalInformation != currentPersonalInfo ||
+                    currentRecord.pregnancyHistory != currentPregnancyHistory
+        } else {
+            currentPersonalInfo != PersonalInformation() ||
+                    currentPregnancyHistory != PregnancyHistory()
+        }
+    }
+}

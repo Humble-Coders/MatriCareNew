@@ -22,6 +22,7 @@ import com.example.matricareog.HealthReport
 import com.example.matricareog.HealthStatus
 import com.example.matricareog.MetricStatus
 import com.example.matricareog.viewmodels.ReportViewModel
+import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,67 +53,111 @@ fun ReportAnalysisScreen(
     userId: String,
     onBackClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    viewModel: ReportViewModel = viewModel()
+    reportViewModel: ReportViewModel ,
+    medicalHistoryViewModel: MedicalHistoryViewModel
 ) {
     val context = LocalContext.current
-    val healthReport by viewModel.healthReport.observeAsState()
-    val medicalHistory by viewModel.medicalHistory.observeAsState()
-    val mlPrediction by viewModel.mlPrediction.observeAsState()
-    val isLoading by viewModel.isLoading.observeAsState(false)
-    val error by viewModel.error.observeAsState()
-    val isModelReady by viewModel.isModelReady.observeAsState(false)
+
+    // Data from ReportViewModel
+    val mlPrediction by reportViewModel.mlPrediction.observeAsState()
+    val isLoading by reportViewModel.isLoading.observeAsState(false)
+    val error by reportViewModel.error.observeAsState()
+    val isModelReady by reportViewModel.isModelReady.observeAsState(false)
+
+    val generatedReport by reportViewModel.generatedHealthReport.observeAsState()
+
+    // Data from MedicalHistoryViewModel (LiveData)
+    val personalInfo by medicalHistoryViewModel.personalInfo.observeAsState()
+    val pregnancyHistory by medicalHistoryViewModel.pregnancyHistory.observeAsState()
 
     // Initialize ML model when screen loads
     LaunchedEffect(Unit) {
         if (!isModelReady) {
-            viewModel.initializeMLModel(context)
+            reportViewModel.initializeMLModel(context)
         }
     }
 
-    LaunchedEffect(userId, isModelReady) {
-        if (isModelReady) {
-            viewModel.fetchAllData(userId) // This will fetch health data + ML prediction
-        } else {
-            viewModel.fetchHealthData(userId) // Fallback to basic health data
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            ReportTopBar(onBackClick = onBackClick, onShareClick = onShareClick)
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF8F9FA))
-        ) {
-            when {
-                isLoading -> LoadingIndicator()
-                error != null -> ErrorScreen(error!!) {
-                    if (isModelReady) {
-                        viewModel.fetchAllData(userId)
-                    } else {
-                        viewModel.fetchHealthData(userId)
-                    }
-                }
-                healthReport != null && medicalHistory != null -> {
-                    ReportContent(
-                        healthReport = healthReport!!,
-                        personalInfo = medicalHistory!!.personalInformation,
-                        mlPrediction = mlPrediction
-                    )
-                }
-                else -> EmptyStateScreen {
-                    if (isModelReady) {
-                        viewModel.fetchAllData(userId)
-                    } else {
-                        viewModel.fetchHealthData(userId)
-                    }
-                }
+    // Generate report when LiveData changes
+    LaunchedEffect(personalInfo, pregnancyHistory) {
+        personalInfo?.let { pInfo ->
+            pregnancyHistory?.let { pHistory ->
+                reportViewModel.processMLAnalysisFromLiveData(
+                    personalInfo = pInfo,
+                    pregnancyHistory = pHistory,
+                    userName = "Patient" // Or fetch from user data
+                )
             }
         }
+    }
+
+    // Save button click handler
+    fun onSaveClick() {
+        personalInfo?.let { pInfo ->
+            pregnancyHistory?.let { pHistory ->
+                medicalHistoryViewModel.saveCompleteDataToFirebase(
+                    userId = userId,
+                    mlPrediction = mlPrediction
+                )
+            }
+        }
+    }
+
+
+
+
+    // UI Layout
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ReportTopBar(
+            onBackClick = onBackClick,
+            onShareClick = onShareClick
+        )
+
+        when {
+            isLoading -> {
+                LoadingIndicator()
+            }
+
+            error != null -> {
+                val localError = error
+                ErrorScreen(
+                    error = localError ?: "Unknown error occurred",
+                    onRetry = {
+                        personalInfo?.let { pInfo ->
+                            pregnancyHistory?.let { pHistory ->
+                                reportViewModel.processMLAnalysisFromLiveData(
+
+                                    personalInfo = pInfo,
+                                    pregnancyHistory = pHistory,
+                                    userName = "Patient"
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+
+            generatedReport != null && personalInfo != null -> {
+                ReportContent(
+                    healthReport = generatedReport!!,
+                    personalInfo = personalInfo!!,
+                    mlPrediction = mlPrediction,
+                    onSaveClick = {
+                        onSaveClick()
+                    }
+                )
+            }
+
+            else -> {
+                EmptyStateScreen(
+                    onRetry = {
+                        medicalHistoryViewModel.loadMedicalHistoryList(userId ?: "")
+                    }
+                )
+            }
+        }
+
     }
 }
 
@@ -120,7 +165,8 @@ fun ReportAnalysisScreen(
 private fun ReportContent(
     healthReport: HealthReport,
     personalInfo: PersonalInformation,
-    mlPrediction: ReportRepository.RiskPrediction?
+    mlPrediction: ReportRepository.RiskPrediction?,
+    onSaveClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -163,8 +209,8 @@ private fun ReportContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         ActionButtonsSection(
-            onSaveReport = { /* Handle save */ },
-            onShareResults = { }
+            onSaveReport = onSaveClick,
+            onShareResults = { /* Handle share */ }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -262,54 +308,47 @@ private fun MLPredictionCard(
             )
 
             // Risk Percentage
-            Text(
-                text = "${String.format("%.1f", prediction.riskPercentage)}% Risk Probability",
-                fontSize = 14.sp,
-                color = iconColor.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+
 
             // Recommendations
-            if (prediction.recommendations.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "AI Recommendations:",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = iconColor,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                prediction.recommendations.take(3).forEach { recommendation ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Text(
-                            text = "•",
-                            color = iconColor,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(end = 6.dp)
-                        )
-                        Text(
-                            text = recommendation,
-                            fontSize = 13.sp,
-                            color = iconColor.copy(alpha = 0.9f),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
+//            if (prediction.recommendations.isNotEmpty()) {
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                Text(
+//                    text = "AI Recommendations:",
+//                    fontSize = 14.sp,
+//                    fontWeight = FontWeight.SemiBold,
+//                    color = iconColor,
+//                    modifier = Modifier.fillMaxWidth()
+//                )
+//
+//                Spacer(modifier = Modifier.height(8.dp))
+//
+//                prediction.recommendations.take(3).forEach { recommendation ->
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .padding(vertical = 2.dp),
+//                        verticalAlignment = Alignment.Top
+//                    ) {
+//                        Text(
+//                            text = "•",
+//                            color = iconColor,
+//                            fontSize = 14.sp,
+//                            modifier = Modifier.padding(end = 6.dp)
+//                        )
+//                        Text(
+//                            text = recommendation,
+//                            fontSize = 13.sp,
+//                            color = iconColor.copy(alpha = 0.9f),
+//                            modifier = Modifier.weight(1f)
+//                        )
+//                    }
+//                }
+//            }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

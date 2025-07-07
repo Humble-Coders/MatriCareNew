@@ -25,13 +25,15 @@ import com.example.matricareog.Routes
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
+
 fun MedicalHistoryScreenOne(
     userId: String,
     navigateBack: () -> Unit = {},
     navigateToScreenTwo: () -> Unit = {},
-    viewModel: MedicalHistoryViewModel = viewModel()
-) {
+    viewModel: MedicalHistoryViewModel // Remove = viewModel()
+){
     val isLoading by viewModel.isLoading.observeAsState(false)
     val error by viewModel.error.observeAsState()
 
@@ -49,6 +51,7 @@ fun MedicalHistoryScreenOne(
     var bodyTemperature by remember { mutableFloatStateOf(0f) }
     var pulseRate by remember { mutableFloatStateOf(0f) }
     var hemoglobinLevel by remember { mutableFloatStateOf(0f) }
+    var hba1cLevel by remember { mutableFloatStateOf(0f) }
 
     // Show error message if any
     error?.let { errorMessage ->
@@ -270,6 +273,23 @@ fun MedicalHistoryScreenOne(
                                 hemoglobinLevel = newValue.toFloatOrNull() ?: 0f
                             },
                             label = { Text("Hemoglobin Level") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = pinkColor,
+                                focusedLabelColor = pinkColor
+                            ),
+                            singleLine = true
+                        )
+                    }
+
+                    item {
+                        OutlinedTextField(
+                            value = if (hba1cLevel == 0f) "" else hba1cLevel.toString(),
+                            onValueChange = { newValue ->
+                                hba1cLevel = newValue.toFloatOrNull() ?: 0f
+                            },
+                            label = { Text("HBA1C Level") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.fillMaxWidth(),
                             colors = OutlinedTextFieldDefaults.colors(

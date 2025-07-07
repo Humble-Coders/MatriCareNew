@@ -14,11 +14,11 @@ import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
-class MatriCareRepository {
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+class MatriCareRepository(
+        private val auth: FirebaseAuth,
+        private val firestore: FirebaseFirestore
+         ) {
     private val TAG = "MatriCareRepository"
-
     suspend fun getChartData(): Flow<Result<ChartData>> = flow {
         try {
             val currentUser = auth.currentUser

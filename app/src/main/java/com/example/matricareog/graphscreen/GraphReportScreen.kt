@@ -1,4 +1,5 @@
 package com.example.matricareog.graphscreen
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,8 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.ChartData
 import com.example.matricareog.HealthDataPoint
@@ -32,13 +31,11 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.utils.ColorTemplate
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MatriCareScreen(
     onBackClick: () -> Unit,
-     viewModel: MatriCareViewModel = viewModel()
-
+    viewModel: MatriCareViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedTab by viewModel.selectedTab.collectAsState()
@@ -215,17 +212,14 @@ private fun ChartCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Simple Line Chart Representation
-//            LineChartView(
-//                data = data,
-//                labels = labels,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(200.dp)
-//            )
-            LineChartScreen()
-
-
+            // Line Chart
+            LineChartView(
+                data = data,
+                labels = labels,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -266,28 +260,6 @@ private fun ChartCard(
 }
 
 @Composable
-fun LineChartScreen() {
-    val hemoglobinValues = listOf(13.5, 14.0, 12.8, 13.2, 14.5)
-    val dateLabels = listOf("01 Jun", "05 Jun", "10 Jun", "15 Jun", "18 Jun")
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text("Hemoglobin Over Time", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-        LineChartView(
-            data = hemoglobinValues,
-            labels = dateLabels,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-        )
-    }
-}
-
-@Composable
 fun LineChartView(
     data: List<Double>,
     labels: List<String>,
@@ -320,7 +292,7 @@ fun LineChartView(
                 Entry(index.toFloat(), value.toFloat())
             }
 
-            val dataSet = LineDataSet(entries, "Hemoglobin").apply {
+            val dataSet = LineDataSet(entries, "Data").apply {
                 color = ColorTemplate.COLORFUL_COLORS[0]
                 valueTextColor = android.graphics.Color.BLACK
                 circleRadius = 4f
@@ -335,8 +307,6 @@ fun LineChartView(
         }
     )
 }
-
-
 
 @Composable
 private fun ErrorMessage(

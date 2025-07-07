@@ -7,9 +7,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-class UserRepository {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+class UserRepository(
+    private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore
+) {
 
     suspend fun signUp(
         email: String,
@@ -103,10 +104,6 @@ class UserRepository {
             AuthResult.Error(getErrorMessage(e))
         }
     }
-//
-//    fun logout() {
-//        auth.signOut()
-//    }
 
     fun isUserLoggedIn(): Boolean {
         return auth.currentUser != null

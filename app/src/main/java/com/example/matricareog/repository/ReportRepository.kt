@@ -10,6 +10,7 @@ import com.example.matricareog.HealthStatus
 import com.example.matricareog.MedicalHistory
 import com.example.matricareog.MetricStatus
 import com.example.matricareog.PersonalInformation
+import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.PregnancyInfo
 import com.example.matricareog.R
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,10 +25,10 @@ import java.nio.channels.FileChannel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import javax.inject.Inject
 
-class ReportRepository @Inject constructor() {
-    private val firestore: FirebaseFirestore = Firebase.firestore
+class ReportRepository(
+    private val firestore: FirebaseFirestore
+) {
     private val medicalHistoryCollection = firestore.collection("medical_history")
     private val usersCollection = firestore.collection("users")
     private val TAG = "ReportRepository"
@@ -35,7 +36,6 @@ class ReportRepository @Inject constructor() {
     private var tfliteInterpreter: Interpreter? = null
     private var isModelLoaded = false
 
-    // Initialize TFLite model
     fun initializeModel(context: Context) {
         try {
             val modelBuffer = loadModelFile(context, "medical_risk_model.tflite")
@@ -59,10 +59,7 @@ class ReportRepository @Inject constructor() {
 
     // ML Model Prediction
     data class RiskPrediction(
-        val riskLevel: String,
-        val riskScore: Float,
-        val riskPercentage: Float,
-        val recommendations: List<String>
+        val riskLevel: String
     )
 
     private fun predictRisk(personalInfo: PersonalInformation, pregnancyInfo: PregnancyInfo?): RiskPrediction? {
@@ -72,35 +69,29 @@ class ReportRepository @Inject constructor() {
                 return null
             }
 
-            // Prepare input data based on your model's expected format
-            // [age, g, p, l, a, d, systolic, diastolic, rbs, bodytemp, heartrate, hb, hba1c, rr]
             val inputData = floatArrayOf(
                 personalInfo.age.toFloat(),
-                pregnancyInfo?.numberOfPregnancies?.toFloat() ?: 0f, // g
-                pregnancyInfo?.numberOfLiveBirths?.toFloat() ?: 0f,  // p
-                personalInfo.lifestyle.toFloat(), // l (0=Sedentary, 1=Active, 2=VeryActive)
-                if (personalInfo.alcoholConsumption) 1f else 0f, // a
-                if (personalInfo.hasDiabetes) 1f else 0f, // d
+                pregnancyInfo?.numberOfPregnancies?.toFloat() ?: 0f,
+                pregnancyInfo?.numberOfLiveBirths?.toFloat() ?: 0f,
+                personalInfo.lifestyle.toFloat(),
+                if (personalInfo.alcoholConsumption) 1f else 0f,
+                if (personalInfo.hasDiabetes) 1f else 0f,
                 personalInfo.systolicBloodPressure.toFloat(),
                 personalInfo.diastolicBloodPressure.toFloat(),
-                personalInfo.glucose.toFloat(), // rbs (Random Blood Sugar)
+                personalInfo.glucose.toFloat(),
                 personalInfo.bodyTemperature.toFloat(),
-                personalInfo.pulseRate.toFloat(), // heartrate
-                personalInfo.hemoglobinLevel.toFloat(), // hb
+                personalInfo.pulseRate.toFloat(),
+                personalInfo.hemoglobinLevel.toFloat(),
                 personalInfo.hba1c.toFloat(),
-                personalInfo.respirationRate.toFloat() // rr
+                personalInfo.respirationRate.toFloat()
             )
 
-            // Prepare input and output arrays
             val input = Array(1) { inputData }
-            val output = Array(1) { FloatArray(2) } // Assuming 2 classes: No Risk, High Risk
+            val output = Array(1) { FloatArray(2) }
 
-            // Run inference
             tfliteInterpreter!!.run(input, output)
-
             val probabilities = output[0]
             val highRiskProbability = probabilities[1]
-            val lowRiskProbability = probabilities[0]
 
             val riskLevel = when {
                 highRiskProbability > 0.7f -> "High Risk"
@@ -108,111 +99,38 @@ class ReportRepository @Inject constructor() {
                 else -> "Low Risk"
             }
 
-            val recommendations = generateRecommendations(riskLevel, personalInfo, pregnancyInfo)
-
-            RiskPrediction(
-                riskLevel = riskLevel,
-                riskScore = highRiskProbability,
-                riskPercentage = highRiskProbability * 100,
-                recommendations = recommendations
-            )
-
+            RiskPrediction(riskLevel = riskLevel)
         } catch (e: Exception) {
             Log.e(TAG, "Error during prediction: ${e.message}")
             null
         }
     }
 
-    private fun generateRecommendations(
-        riskLevel: String,
-        personalInfo: PersonalInformation,
-        pregnancyInfo: PregnancyInfo?
-    ): List<String> {
-        val recommendations = mutableListOf<String>()
-
-        when (riskLevel) {
-            "High Risk" -> {
-                recommendations.add("Immediate medical consultation recommended")
-                recommendations.add("Regular monitoring of vital signs")
-                recommendations.add("Follow strict dietary guidelines")
-                if (personalInfo.hasDiabetes) {
-                    recommendations.add("Monitor blood glucose levels closely")
-                }
-            }
-            "Moderate Risk" -> {
-                recommendations.add("Schedule regular check-ups")
-                recommendations.add("Maintain balanced diet and exercise")
-                recommendations.add("Monitor blood pressure regularly")
-            }
-            else -> {
-                recommendations.add("Continue current healthy lifestyle")
-                recommendations.add("Regular prenatal check-ups")
-                recommendations.add("Maintain balanced nutrition")
-            }
-        }
-
-        // Add specific recommendations based on metrics
-        if (personalInfo.systolicBloodPressure > 140 || personalInfo.diastolicBloodPressure > 90) {
-            recommendations.add("Blood pressure management required")
-        }
-
-        if (personalInfo.hemoglobinLevel < 11.0) {
-            recommendations.add("Iron supplementation may be needed")
-        }
-
-        if (personalInfo.alcoholConsumption) {
-            recommendations.add("Avoid alcohol consumption during pregnancy")
-        }
-
-        return recommendations.take(4) // Limit to 4 recommendations
-    }
-
     suspend fun getHealthReport(userId: String): Result<HealthReport> {
-        Log.d(TAG, "getHealthReport called for user: $userId")
         return try {
-            Log.d(TAG, "Fetching medical history for user: $userId")
             val medicalHistoryResult = getMedicalHistory(userId)
-
             if (medicalHistoryResult.isFailure) {
-                Log.e(TAG, "Failed to get medical history: ${medicalHistoryResult.exceptionOrNull()?.message}")
                 return Result.failure(medicalHistoryResult.exceptionOrNull()!!)
             }
 
-            val medicalHistory = medicalHistoryResult.getOrNull().also {
-                Log.d(TAG, "Medical history retrieved: ${it != null}")
-            } ?: run {
-                Log.e(TAG, "Medical history is null after successful retrieval")
-                return Result.failure(Exception("No medical history found for user $userId"))
-            }
+            val medicalHistory = medicalHistoryResult.getOrNull()
+                ?: return Result.failure(Exception("No medical history found for user $userId"))
 
-            Log.d(TAG, "Fetching user name for: $userId")
             val userNameResult = getUserName(userId)
-            val userName = if (userNameResult.isSuccess) {
-                userNameResult.getOrNull() ?: run {
-                    Log.w(TAG, "User name not found, using default")
-                    "Patient"
-                }
-            } else {
-                Log.w(TAG, "Couldn't fetch user name: ${userNameResult.exceptionOrNull()?.message}")
-                "Patient"
-            }
+            val userName = userNameResult.getOrNull() ?: "Patient"
 
-            Log.d(TAG, "Creating pregnancy info from history")
             val pregnancyInfo = PregnancyInfo(
                 numberOfPregnancies = medicalHistory.pregnancyHistory.numberOfPregnancies,
                 numberOfLiveBirths = medicalHistory.pregnancyHistory.numberOfLiveBirths,
                 numberOfAbortions = medicalHistory.pregnancyHistory.numberOfAbortions
             )
 
-            Log.d(TAG, "Converting to HealthReport")
             val report = convertToHealthReport(
                 personalInfo = medicalHistory.personalInformation,
                 userName = userName,
                 pregnancyInfo = pregnancyInfo,
-                riskPrediction = null // Skip prediction for basic fetch
+                riskPrediction = null
             )
-
-            Log.d(TAG, "Health report created successfully")
             Result.success(report)
         } catch (e: Exception) {
             Log.e(TAG, "Error in getHealthReport: ${e.message}", e)
@@ -221,24 +139,13 @@ class ReportRepository @Inject constructor() {
     }
 
     suspend fun getMedicalHistory(userId: String): Result<MedicalHistory> {
-        Log.d(TAG, "getMedicalHistory called for user: $userId")
         return try {
-            Log.d(TAG, "Querying Firestore for medical history")
             val document = medicalHistoryCollection.document(userId).get().await()
-
             if (!document.exists()) {
-                Log.e(TAG, "Document does not exist for user: $userId")
                 return Result.failure(Exception("Medical history not found"))
             }
-
-            val medicalHistory = document.toObject<MedicalHistory>().also {
-                Log.d(TAG, "Document converted to MedicalHistory: ${it != null}")
-            } ?: run {
-                Log.e(TAG, "Failed to convert document to MedicalHistory")
-                return Result.failure(Exception("Medical history data format error"))
-            }
-
-            Log.d(TAG, "Medical history retrieved successfully")
+            val medicalHistory = document.toObject<MedicalHistory>()
+                ?: return Result.failure(Exception("Medical history data format error"))
             Result.success(medicalHistory)
         } catch (e: Exception) {
             Log.e(TAG, "Exception in getMedicalHistory: ${e.message}", e)
@@ -247,19 +154,10 @@ class ReportRepository @Inject constructor() {
     }
 
     private suspend fun getUserName(userId: String): Result<String> {
-        Log.d(TAG, "getUserName called for user: $userId")
         return try {
-            Log.d(TAG, "Querying Firestore for user name")
             val document = usersCollection.document(userId).get().await()
-
-            val name = document.getString("fullName").also {
-                Log.d(TAG, "User name retrieved: $it")
-            } ?: run {
-                Log.e(TAG, "User name field not found in document")
-                return Result.failure(Exception("Name not found in user document"))
-            }
-
-            Log.d(TAG, "User name retrieved successfully")
+            val name = document.getString("fullName")
+                ?: return Result.failure(Exception("Name not found in user document"))
             Result.success(name)
         } catch (e: Exception) {
             Log.e(TAG, "Exception in getUserName: ${e.message}", e)
@@ -275,55 +173,17 @@ class ReportRepository @Inject constructor() {
     ): HealthReport {
         val date = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())
 
-        // Create detailed metrics
         val metrics = listOf(
-            createHealthMetric(
-                id = "1",
-                title = "Systolic Blood Pressure",
-                value = personalInfo.systolicBloodPressure.toString(),
-                unit = "mmHg",
-                normalRange = "95-160",
-                currentValue = personalInfo.systolicBloodPressure.toFloat(),
-                rangeMin = 95f,
-                rangeMax = 160f,
-                icon = R.drawable.sbp
-            ),
-            createHealthMetric(
-                id = "2",
-                title = "Diastolic Blood Pressure",
-                value = personalInfo.diastolicBloodPressure.toString(),
-                unit = "mmHg",
-                normalRange = "60-100",
-                currentValue = personalInfo.diastolicBloodPressure.toFloat(),
-                rangeMin = 60f,
-                rangeMax = 100f,
-                icon = R.drawable.sbp
-            ),
-            createHealthMetric(
-                id = "3",
-                title = "Pulse Rate",
-                value = personalInfo.pulseRate.toString(),
-                unit = "BPM",
-                normalRange = "60-100",
-                currentValue = personalInfo.pulseRate.toFloat(),
-                rangeMin = 60f,
-                rangeMax = 100f,
-                icon = R.drawable.bp
-            ),
-            createHealthMetric(
-                id = "4",
-                title = "Body Temperature",
-                value = "%.1f".format(personalInfo.bodyTemperature),
-                unit = "°F",
-                normalRange = "97.0-99.0",
-                currentValue = personalInfo.bodyTemperature.toFloat(),
-                rangeMin = 97f,
-                rangeMax = 99f,
-                icon = R.drawable.thermometer
-            )
+            createHealthMetric("1", "Systolic Blood Pressure", personalInfo.systolicBloodPressure.toString(),
+                "mmHg", "95-160", personalInfo.systolicBloodPressure.toFloat(), 95f, 160f, R.drawable.sbp),
+            createHealthMetric("2", "Diastolic Blood Pressure", personalInfo.diastolicBloodPressure.toString(),
+                "mmHg", "60-100", personalInfo.diastolicBloodPressure.toFloat(), 60f, 100f, R.drawable.sbp),
+            createHealthMetric("3", "Pulse Rate", personalInfo.pulseRate.toString(),
+                "BPM", "60-100", personalInfo.pulseRate.toFloat(), 60f, 100f, R.drawable.bp),
+            createHealthMetric("4", "Body Temperature", "%.1f".format(personalInfo.bodyTemperature),
+                "°F", "97.0-99.0", personalInfo.bodyTemperature.toFloat(), 97f, 99f, R.drawable.thermometer)
         )
 
-        // Determine overall status (now considering ML prediction)
         val overallStatus = determineOverallStatus(metrics, riskPrediction)
 
         return HealthReport(
@@ -342,104 +202,71 @@ class ReportRepository @Inject constructor() {
     }
 
     private fun createHealthMetric(
-        id: String,
-        title: String,
-        value: String,
-        unit: String,
-        normalRange: String,
-        currentValue: Float,
-        rangeMin: Float,
-        rangeMax: Float,
-        icon: Int
+        id: String, title: String, value: String, unit: String, normalRange: String,
+        currentValue: Float, rangeMin: Float, rangeMax: Float, icon: Int
     ): HealthMetric {
         val status = when {
             currentValue < rangeMin * 0.9f || currentValue > rangeMax * 1.1f -> MetricStatus.CRITICAL
             currentValue < rangeMin * 0.95f || currentValue > rangeMax * 1.05f -> MetricStatus.WARNING
             else -> MetricStatus.NORMAL
         }
-
-        return HealthMetric(
-            id = id,
-            title = title,
-            value = value,
-            unit = unit,
-            normalRange = normalRange,
-            currentValue = currentValue,
-            rangeMin = rangeMin,
-            rangeMax = rangeMax,
-            icon = icon,
-            status = status
-        )
+        return HealthMetric(id, title, value, unit, normalRange, currentValue, rangeMin, rangeMax, icon, status)
     }
 
     private fun determineOverallStatus(
         metrics: List<HealthMetric>,
         riskPrediction: RiskPrediction?
     ): HealthStatus {
-        // First check ML prediction if available
-        riskPrediction?.let { prediction ->
-            return when (prediction.riskLevel) {
-                "High Risk" -> HealthStatus(
-                    status = "High Risk Pregnancy",
-                    description = "ML Analysis indicates high risk - Immediate medical attention recommended",
-                    color = Color(0xFFF44336)
-                )
-                "Moderate Risk" -> HealthStatus(
-                    status = "Moderate Risk Pregnancy",
-                    description = "ML Analysis suggests moderate risk - Regular monitoring recommended",
-                    color = Color(0xFFFF9800)
-                )
-                else -> HealthStatus(
-                    status = "Low Risk Pregnancy",
-                    description = "ML Analysis indicates low risk - Continue regular care",
-                    color = Color(0xFF4CAF50)
-                )
+        riskPrediction?.let {
+            return when (it.riskLevel) {
+                "High Risk" -> HealthStatus("High Risk Pregnancy",
+                    "ML Analysis indicates high risk - Immediate medical attention recommended", Color(0xFFF44336))
+                "Moderate Risk" -> HealthStatus("Moderate Risk Pregnancy",
+                    "ML Analysis suggests moderate risk - Regular monitoring recommended", Color(0xFFFF9800))
+                else -> HealthStatus("Low Risk Pregnancy",
+                    "ML Analysis indicates low risk - Continue regular care", Color(0xFF4CAF50))
             }
         }
-
-        // Fallback to traditional metric-based assessment
         return when {
             metrics.any { it.status == MetricStatus.CRITICAL } ->
-                HealthStatus(
-                    status = "Critical Health Status",
-                    description = "Some metrics are in critical range",
-                    color = Color(0xFFF44336)
-                )
+                HealthStatus("Critical Health Status", "Some metrics are in critical range", Color(0xFFF44336))
             metrics.any { it.status == MetricStatus.WARNING } ->
-                HealthStatus(
-                    status = "Warning Health Status",
-                    description = "Some metrics are outside normal range",
-                    color = Color(0xFFFF9800))
-            else ->
-                HealthStatus(
-                    status = "Excellent Health Status",
-                    description = "All metrics are within normal range",
-                    color = Color(0xFF4CAF50))
+                HealthStatus("Warning Health Status", "Some metrics are outside normal range", Color(0xFFFF9800))
+            else -> HealthStatus("Excellent Health Status", "All metrics are within normal range", Color(0xFF4CAF50))
         }
     }
 
-    // Get ML prediction separately for UI display
-    suspend fun getMlPrediction(userId: String): Result<RiskPrediction> {
+    fun generateMLPrediction(personalInfo: PersonalInformation, pregnancyInfo: PregnancyInfo): RiskPrediction? {
+        return predictRisk(personalInfo, pregnancyInfo)
+    }
+
+    fun generateHealthReportFromData(
+        personalInfo: PersonalInformation,
+        userName: String,
+        pregnancyInfo: PregnancyInfo,
+        riskPrediction: RiskPrediction?
+    ): HealthReport {
+        return convertToHealthReport(personalInfo, userName, pregnancyInfo, riskPrediction)
+    }
+
+    suspend fun saveCompleteDataWithML(
+        userId: String,
+        personalInfo: PersonalInformation,
+        pregnancyHistory: PregnancyHistory,
+        mlPrediction: RiskPrediction?
+    ): Result<String> {
         return try {
-            val medicalHistoryResult = getMedicalHistory(userId)
-            if (medicalHistoryResult.isFailure) {
-                return Result.failure(medicalHistoryResult.exceptionOrNull()!!)
-            }
-
-            val medicalHistory = medicalHistoryResult.getOrNull() ?: return Result.failure(
-                Exception("No medical history found for user $userId")
+            val currentTimestamp = System.currentTimeMillis()
+            val medicalHistory = MedicalHistory(
+                userId = userId,
+                personalInformation = personalInfo,
+                pregnancyHistory = pregnancyHistory,
+                createdAt = currentTimestamp,
+                updatedAt = currentTimestamp,
+                mlRiskLevel = mlPrediction?.riskLevel
             )
-
-            val pregnancyInfo = PregnancyInfo(
-                numberOfPregnancies = medicalHistory.pregnancyHistory.numberOfPregnancies,
-                numberOfLiveBirths = medicalHistory.pregnancyHistory.numberOfLiveBirths,
-                numberOfAbortions = medicalHistory.pregnancyHistory.numberOfAbortions
-            )
-
-            val prediction = predictRisk(medicalHistory.personalInformation, pregnancyInfo)
-                ?: return Result.failure(Exception("Unable to generate ML prediction"))
-
-            Result.success(prediction)
+            medicalHistoryCollection.document(userId).set(medicalHistory).await()
+            Result.success("Complete data with ML analysis saved successfully for user: $userId")
         } catch (e: Exception) {
             Result.failure(e)
         }

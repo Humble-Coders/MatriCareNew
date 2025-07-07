@@ -56,14 +56,31 @@ data class PregnancyHistory(
 )
 
 
+
 data class MedicalHistory(
+    val id: String = "",
     val userId: String = "",
     val personalInformation: PersonalInformation = PersonalInformation(),
     val pregnancyHistory: PregnancyHistory = PregnancyHistory(),
-    val createdAt: Long = 0L,
-    val updatedAt: Long = 0L,
-    val documentId: String = "" // This will be set when retrieving from Firestore
+
+    // Timestamps
+    val createdAt: Long = System.currentTimeMillis(),   // explicitly for creation
+    val updatedAt: Long = System.currentTimeMillis(),   // explicitly for last update
+    val timestamp: Long = System.currentTimeMillis(),   // still keep generic timestamp if needed
+
+    // ML prediction fields
+    val mlRiskLevel: String? = null,
+    val mlRiskScore: Float? = null,           // changed to Float? to match your mlPrediction?.riskScore
+    val mlRiskPercentage: Float? = null,      // changed to Float? to match your mlPrediction?.riskPercentage
+    val mlRecommendations: List<String>? = emptyList(), // changed to nullable List<String>? to match your code
+    val mlPredictionTimestamp: Long? = null,
+
+    // Versioning
+    val version: Int = 1
 )
+
+
+
 
 
 // Data Classes

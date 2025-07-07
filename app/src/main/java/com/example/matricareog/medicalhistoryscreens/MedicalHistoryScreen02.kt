@@ -20,17 +20,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+
 fun MedicalHistoryScreenTwo(
     userId: String,
     onBackPressed: () -> Unit = {},
     onContinuePressed: () -> Unit = {},
-    viewModel: MedicalHistoryViewModel = viewModel()
+    viewModel: MedicalHistoryViewModel // Remove = viewModel()
+
 ) {
+    val personalInfo by viewModel.personalInfo.observeAsState()
     val pinkColor = Color(0xFFEF5DA8)
 
     // Observe ViewModel state
@@ -266,17 +270,30 @@ fun MedicalHistoryScreenTwo(
                                     numberOfChildDeaths = numberOfChildDeaths.toInt(),
                                     numberOfDeliveries = numberOfDeliveries.toInt(),
                                     lastDeliveryDate = if (lastDeliveryDate.isBlank()) "N/A" else lastDeliveryDate
-
                                 )
-
-                                // Pass the object to viewModel to store in LiveData
                                 viewModel.updatePregnancyHistory(pregnancyHistoryObject)
 
-                                println("Save & Continue button clicked") // Debug log
-                                println("Current pregnancyHistory: $pregnancyHistoryObject") // Debug log
+                                if (personalInfo != null) {
+                                    viewModel.storeMedicalHistoryInLiveData(
+                                        personalInfo = personalInfo!!,
+                                        pregnancyHistory = pregnancyHistoryObject
+                                    )
+                                    onContinuePressed()
+                                }
+                                else {
+                                    println("Personal Info not available yet!")
+                                }
 
-                                // Save the complete medical history
-                                viewModel.saveMedicalHistory(userId)
+
+
+                                println("Save & Continue button clicked")
+                                println("Current pregnancyHistory: $pregnancyHistoryObject")
+
+                                // Trigger saving to Firebase
+
+
+                                // Navigate or do next
+
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

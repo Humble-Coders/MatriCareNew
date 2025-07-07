@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class MatriCareViewModel : ViewModel() {
-
-    private val repository = MatriCareRepository() // Internal repository instance
+class MatriCareViewModel(
+    private val repository: MatriCareRepository
+) : ViewModel() { // Internal repository instance
 
     private val _uiState = MutableStateFlow<MatriCareState>(MatriCareState.Loading)
     val uiState: StateFlow<MatriCareState> = _uiState.asStateFlow()
