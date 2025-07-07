@@ -111,42 +111,5 @@ class ReportViewModel(
         }
     }
 
-    // REMOVED: Save functions - MedicalHistoryViewModel handles all saves
-    // fun saveCompleteDataToFirebase(...)
-    // fun clearSavedState()
 
-    // NEW: Get current ML prediction for MedicalHistoryViewModel to save
-    fun getCurrentMLPrediction(): ReportRepository.RiskPrediction? {
-        return _mlPrediction.value
-    }
-
-    // NEW: Get current health report
-    fun getCurrentHealthReport(): HealthReport? {
-        return _generatedHealthReport.value
-    }
-
-    // Clear error state
-    fun clearError() {
-        _error.value = null
-    }
-
-    // Reset generated data (useful for new analysis)
-    fun resetGeneratedData() {
-        _mlPrediction.value = null
-        _generatedHealthReport.value = null
-    }
-
-    // Check if model is ready for analysis
-    fun isModelReadyForAnalysis(): Boolean {
-        return _isModelReady.value == true
-    }
-
-    // Get model loading status
-    fun getModelStatus(): String {
-        return when {
-            _isModelLoading.value == true -> "Loading ML Model..."
-            _isModelReady.value == true -> "ML Model Ready"
-            else -> "ML Model Not Ready"
-        }
-    }
 }

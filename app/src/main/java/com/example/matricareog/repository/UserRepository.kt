@@ -81,33 +81,7 @@ class UserRepository(
         }
     }
 
-    suspend fun getCurrentUser(): AuthResult {
-        return try {
-            val firebaseUser = auth.currentUser
-            if (firebaseUser != null) {
-                val userDoc = firestore.collection("users")
-                    .document(firebaseUser.uid)
-                    .get()
-                    .await()
 
-                val user = userDoc.toObject(User::class.java)
-                if (user != null) {
-                    AuthResult.Success(user)
-                } else {
-                    AuthResult.Error("User data not found")
-                }
-            } else {
-                AuthResult.Error("User not authenticated")
-            }
-        } catch (e: Exception) {
-            Log.e("UserRepository", "❌ Get current user error: ${e.message}", e)
-            AuthResult.Error(getErrorMessage(e))
-        }
-    }
-
-    fun isUserLoggedIn(): Boolean {
-        return auth.currentUser != null
-    }
 
     private fun getErrorMessage(exception: Exception): String {
         return when {

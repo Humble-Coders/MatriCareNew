@@ -7,17 +7,10 @@ import com.example.matricareog.BloodPressure
 import com.example.matricareog.HealthMetric
 import com.example.matricareog.HealthReport
 import com.example.matricareog.HealthStatus
-import com.example.matricareog.MedicalHistory
 import com.example.matricareog.MetricStatus
 import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.PregnancyInfo
 import com.example.matricareog.R
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.toObject
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.tasks.await
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer
@@ -27,10 +20,8 @@ import java.util.Date
 import java.util.Locale
 
 class ReportRepository(
-    private val firestore: FirebaseFirestore
 ) {
-    private val medicalHistoryCollection = firestore.collection("medical_history")
-    private val usersCollection = firestore.collection("users")
+
     private val TAG = "ReportRepository"
 
     private var tfliteInterpreter: Interpreter? = null
@@ -106,64 +97,6 @@ class ReportRepository(
         }
     }
 
-    suspend fun getHealthReport(userId: String): Result<HealthReport> {
-        return try {
-            val medicalHistoryResult = getMedicalHistory(userId)
-            if (medicalHistoryResult.isFailure) {
-                return Result.failure(medicalHistoryResult.exceptionOrNull()!!)
-            }
-
-            val medicalHistory = medicalHistoryResult.getOrNull()
-                ?: return Result.failure(Exception("No medical history found for user $userId"))
-
-            val userNameResult = getUserName(userId)
-            val userName = userNameResult.getOrNull() ?: "Patient"
-
-            val pregnancyInfo = PregnancyInfo(
-                numberOfPregnancies = medicalHistory.pregnancyHistory.numberOfPregnancies,
-                numberOfLiveBirths = medicalHistory.pregnancyHistory.numberOfLiveBirths,
-                numberOfAbortions = medicalHistory.pregnancyHistory.numberOfAbortions
-            )
-
-            val report = convertToHealthReport(
-                personalInfo = medicalHistory.personalInformation,
-                userName = userName,
-                pregnancyInfo = pregnancyInfo,
-                riskPrediction = null
-            )
-            Result.success(report)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in getHealthReport: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-
-    suspend fun getMedicalHistory(userId: String): Result<MedicalHistory> {
-        return try {
-            val document = medicalHistoryCollection.document(userId).get().await()
-            if (!document.exists()) {
-                return Result.failure(Exception("Medical history not found"))
-            }
-            val medicalHistory = document.toObject<MedicalHistory>()
-                ?: return Result.failure(Exception("Medical history data format error"))
-            Result.success(medicalHistory)
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception in getMedicalHistory: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-
-    private suspend fun getUserName(userId: String): Result<String> {
-        return try {
-            val document = usersCollection.document(userId).get().await()
-            val name = document.getString("fullName")
-                ?: return Result.failure(Exception("Name not found in user document"))
-            Result.success(name)
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception in getUserName: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
 
     private fun convertToHealthReport(
         personalInfo: PersonalInformation,
@@ -249,26 +182,5 @@ class ReportRepository(
         return convertToHealthReport(personalInfo, userName, pregnancyInfo, riskPrediction)
     }
 
-    suspend fun saveCompleteDataWithML(
-        userId: String,
-        personalInfo: PersonalInformation,
-        pregnancyHistory: PregnancyHistory,
-        mlPrediction: RiskPrediction?
-    ): Result<String> {
-        return try {
-            val currentTimestamp = System.currentTimeMillis()
-            val medicalHistory = MedicalHistory(
-                userId = userId,
-                personalInformation = personalInfo,
-                pregnancyHistory = pregnancyHistory,
-                createdAt = currentTimestamp,
-                updatedAt = currentTimestamp,
-                mlRiskLevel = mlPrediction?.riskLevel
-            )
-            medicalHistoryCollection.document(userId).set(medicalHistory).await()
-            Result.success("Complete data with ML analysis saved successfully for user: $userId")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+
 }

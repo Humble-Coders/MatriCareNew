@@ -8,7 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -64,7 +63,7 @@ class MainActivity : ComponentActivity() {
         userRepository = UserRepository(auth, firestore)
         matriCareRepository = MatriCareRepository(auth, firestore)
         medicalHistoryRepository = MedicalHistoryRepository(firestore)
-        reportRepository = ReportRepository(firestore)
+        reportRepository = ReportRepository()
 
         // Initialize ViewModels
         authViewModel = AuthViewModel(userRepository)

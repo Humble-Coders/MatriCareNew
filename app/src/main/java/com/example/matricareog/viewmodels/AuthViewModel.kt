@@ -29,19 +29,7 @@ class AuthViewModel(
 
 
 
-    private fun checkAuthStatus() {
-        if (userRepository.isUserLoggedIn()) {
-            viewModelScope.launch {
-                _authState.value = userRepository.getCurrentUser()
-                when (val result = _authState.value) {
-                    is AuthResult.Success -> _currentUser.value = result.user
-                    else -> {}
-                }
-            }
-        } else {
-            _authState.value = AuthResult.Error("Not authenticated")
-        }
-    }
+
 
     fun signUp(email: String, password: String, confirmPassword: String, fullName: String) {
         val validationError = validateSignUpInputs(email, password, confirmPassword, fullName)

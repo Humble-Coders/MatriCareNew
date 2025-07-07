@@ -19,7 +19,7 @@ class MatriCareRepository(
         private val firestore: FirebaseFirestore
          ) {
     private val TAG = "MatriCareRepository"
-    suspend fun getChartData(): Flow<Result<ChartData>> = flow {
+     fun getChartData(): Flow<Result<ChartData>> = flow {
         try {
             val currentUser = auth.currentUser
             if (currentUser == null) {
@@ -71,37 +71,6 @@ class MatriCareRepository(
         }
     }
 
-    suspend fun addHealthData(
-        hemoglobin: Double,
-        hba1c: Double,
-        glucose: Double
-    ): Result<Unit> {
-        return try {
-            val currentUser = auth.currentUser
-                ?: return Result.failure(Exception("User not authenticated"))
-
-            val personalInfo = PersonalInformation(
-                hemoglobinLevel = hemoglobin,
-                glucose = glucose
-            )
-
-            val medicalHistory = MedicalHistory(
-                userId = currentUser.uid,
-                personalInformation = personalInfo,
-                createdAt = System.currentTimeMillis(),
-                updatedAt = System.currentTimeMillis()
-            )
-
-            firestore.collection("medical_history")
-                .add(medicalHistory)
-                .await()
-
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error adding health data: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
 
     private fun calculateHba1cFromGlucose(glucose: Double): Double {
         return if (glucose > 0) {
