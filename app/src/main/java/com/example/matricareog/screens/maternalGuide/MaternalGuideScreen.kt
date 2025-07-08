@@ -1,4 +1,4 @@
-package com.example.matricare
+package com.example.matricareog.screens.maternalGuide
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matricareog.screens.BottomNavigationBar
 import com.example.matricareog.R
+import com.example.matricareog.screens.BottomNavigationBar
 
 // Data class for guide items (unchanged)
 data class GuideItem(

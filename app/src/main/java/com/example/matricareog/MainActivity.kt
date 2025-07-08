@@ -2,6 +2,7 @@ package com.example.matricareog
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
@@ -13,7 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.matricare.MaternalGuideScreen
+import com.example.matricareog.screens.maternalGuide.MaternalGuideScreen
 import com.example.matricareog.screens.GraphReportScreen
 import com.example.matricareog.screens.authScreens.LoginScreen
 import com.example.matricareog.screens.authScreens.LoginSignup
@@ -25,7 +26,11 @@ import com.example.matricareog.repository.MatriCareRepository
 import com.example.matricareog.repository.MedicalHistoryRepository
 import com.example.matricareog.repository.ReportRepository
 import com.example.matricareog.repository.UserRepository
+import com.example.matricareog.screens.maternalGuide.DietPlanScreen
 import com.example.matricareog.screens.HomeScreen
+import com.example.matricareog.screens.SplashScreen
+import com.example.matricareog.screens.maternalGuide.DosAndDontsScreen
+import com.example.matricareog.screens.maternalGuide.YogaExercisesScreen
 import com.example.matricareog.screens.welcomeScreens.GetStarted
 import com.example.matricareog.screens.welcomeScreens.WelcomeScreenThree
 import com.example.matricareog.screens.welcomeScreens.WelcomeScreenOne
@@ -61,7 +66,10 @@ class MainActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
 
         // Initialize Repositories
-        userRepository = UserRepository(auth, firestore)
+        userRepository = UserRepository(
+            auth, firestore,
+            dataStoreManager = DataStoreManager(applicationContext)
+        )
         matriCareRepository = MatriCareRepository(auth, firestore)
         medicalHistoryRepository = MedicalHistoryRepository(firestore)
         reportRepository = ReportRepository()
@@ -80,11 +88,27 @@ class MainActivity : ComponentActivity() {
 
                     NavHost(
                         navController = navController,
-                        startDestination = if (currentUser != null) Routes.Home else Routes.Welcome1
+                        startDestination = Routes.Splash
                     ) {
                         // ----------------------
                         // Welcome Flow
                         // ----------------------
+                        composable(Routes.Splash) {
+                            SplashScreen(
+                                onNavigateToHome = {
+                                    navController.navigate(Routes.Home) {
+                                        popUpTo(Routes.Splash) { inclusive = true }
+                                    }
+                                },
+                                onNavigateToWelcome = {
+                                    navController.navigate(Routes.Welcome1) {
+                                        popUpTo(Routes.Splash) { inclusive = true }
+                                    }
+                                },
+                                authViewModel = authViewModel
+                            )
+                        }
+
                         composable(Routes.Welcome1) {
                             WelcomeScreenOne(
                                 onNextClicked = { navController.navigate(Routes.Welcome2) },
@@ -156,6 +180,11 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onReportHistoryClicked = {
                                     navController.navigate(Routes.MATRICARE)
+                                },
+                                onLogoutClicked = {
+                                    navController.navigate(Routes.AuthChoice) {
+                                        popUpTo(Routes.Home) { inclusive = true }
+                                    }
                                 }
                             )
                         }
@@ -204,7 +233,9 @@ class MainActivity : ComponentActivity() {
                             val userId = backStackEntry.arguments?.getString("userId") ?: ""
                             ReportAnalysisScreen(
                                 userId = userId,
-                                onBackClick = { navController.popBackStack() },
+                                onBackClick = {
+                                    navController.popBackStack()
+                                },
                                 onShareClick = { shareReport(userId) },
                                 reportViewModel = reportAnalysisViewModel,
                                 medicalHistoryViewModel = medicalHistoryViewModel,
@@ -222,17 +253,41 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // ----------------------
-                        // Maternal Guide Screen
-                        // ----------------------
                         composable(Routes.MaternalGuide) {
                             MaternalGuideScreen(
                                 onBackClick = { navController.popBackStack() },
                                 onCardClick = { cardId ->
-                                    // Handle individual card clicks
+                                    when (cardId) {
+                                        "diet_plan" -> navController.navigate(Routes.DietPlan)
+                                        "yoga_exercises" -> navController.navigate(Routes.YogaExercises)
+                                        "dos_donts" -> navController.navigate(Routes.DosAndDonts)
+                                    }
                                 }
                             )
                         }
+
+// Add the new Diet Plan composable in NavHost:
+
+                        composable(Routes.DietPlan) {
+                            DietPlanScreen(
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable(Routes.DosAndDonts) {
+                            DosAndDontsScreen(
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+
+// Add the new Yoga & Exercises composable in NavHost:
+
+                        composable(Routes.YogaExercises) {
+                            YogaExercisesScreen(
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+
                     }
                 }
             }
@@ -252,12 +307,13 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent.createChooser(shareIntent, "Share Report"))
         } catch (e: Exception) {
             // Handle error - could show a toast or snackbar
-            android.util.Log.e("MainActivity", "Error sharing report", e)
+            Log.e("MainActivity", "Error sharing report", e)
         }
     }
 }
 
 object Routes {
+    const val Splash = "SplashScreen" // Add this line
     const val Welcome1 = "WelcomeScreenOne"
     const val Welcome2 = "WelcomeScreenTwo"
     const val Welcome3 = "WelcomeScreenThree"
@@ -268,12 +324,17 @@ object Routes {
     const val Home = "HomeScreen"
     const val MaternalGuide = "MaternalGuideScreen"
 
-    // ✅ Use '/{userId}' to define placeholders correctly
+    // Add new routes for maternal guide sections
+    const val DietPlan = "DietPlanScreen"
+    const val YogaExercises = "YogaExercisesScreen"
+    const val DosAndDonts = "DosAndDontsScreen"
+
+    // Existing routes
     const val MedicalHistory1 = "WelcomeScreenOne/{userId}"
     const val MedicalHistory2 = "WelcomeScreenTwo/{userId}"
     const val ReportAnalysis = "ReportAnalysisScreen/{userId}"
     const val MATRICARE = "GraphReportScreen"
-    // ✅ Use these functions to generate complete route strings at runtime
+
     fun medicalHistory1Route(userId: String) = "WelcomeScreenOne/$userId"
     fun medicalHistory2Route(userId: String) = "WelcomeScreenTwo/$userId"
     fun reportAnalysisRoute(userId: String) = "ReportAnalysisScreen/$userId"

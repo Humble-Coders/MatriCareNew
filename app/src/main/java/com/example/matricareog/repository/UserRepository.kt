@@ -1,6 +1,7 @@
 package com.example.matricareog.repository
 
 import android.util.Log
+import com.example.matricareog.DataStoreManager
 import com.example.matricareog.model.AuthResult
 import com.example.matricareog.model.User
 import com.google.firebase.auth.FirebaseAuth
@@ -9,7 +10,8 @@ import kotlinx.coroutines.tasks.await
 
 class UserRepository(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val dataStoreManager: DataStoreManager
 ) {
 
     suspend fun signUp(
@@ -32,6 +34,13 @@ class UserRepository(
                     .document(firebaseUser.uid)
                     .set(user)
                     .await()
+
+                // Save user session in DataStore
+                dataStoreManager.saveUserSession(
+                    userId = firebaseUser.uid,
+                    email = email,
+                    name = fullName
+                )
 
                 Log.d("UserRepository", "✅ User created successfully: $user")
                 AuthResult.Success(user)
@@ -57,6 +66,13 @@ class UserRepository(
 
                 val user = userDoc.toObject(User::class.java)
                 if (user != null) {
+                    // Save user session in DataStore
+                    dataStoreManager.saveUserSession(
+                        userId = firebaseUser.uid,
+                        email = user.email,
+                        name = user.fullName
+                    )
+
                     Log.d("UserRepository", "✅ Login successful: $user")
                     AuthResult.Success(user)
                 } else {
@@ -70,6 +86,13 @@ class UserRepository(
                         .set(newUser)
                         .await()
 
+                    // Save user session in DataStore
+                    dataStoreManager.saveUserSession(
+                        userId = firebaseUser.uid,
+                        email = email,
+                        name = ""
+                    )
+
                     AuthResult.Success(newUser)
                 }
             } else {
@@ -81,7 +104,42 @@ class UserRepository(
         }
     }
 
+    suspend fun checkCurrentUser(): AuthResult {
+        return try {
+            val firebaseUser = auth.currentUser
+            if (firebaseUser != null) {
+                val userDoc = firestore.collection("users")
+                    .document(firebaseUser.uid)
+                    .get()
+                    .await()
 
+                val user = userDoc.toObject(User::class.java)
+                if (user != null) {
+                    Log.d("UserRepository", "✅ Current user found: $user")
+                    AuthResult.Success(user)
+                } else {
+                    AuthResult.Error("User data not found")
+                }
+            } else {
+                AuthResult.Error("Not authenticated")
+            }
+        } catch (e: Exception) {
+            Log.e("UserRepository", "❌ Check current user error: ${e.message}", e)
+            AuthResult.Error("Not authenticated")
+        }
+    }
+
+    suspend fun logout(): AuthResult {
+        return try {
+            auth.signOut()
+            dataStoreManager.clearUserSession()
+            Log.d("UserRepository", "✅ User logged out successfully")
+            AuthResult.Error("Not authenticated")
+        } catch (e: Exception) {
+            Log.e("UserRepository", "❌ Logout error: ${e.message}", e)
+            AuthResult.Error("Logout failed")
+        }
+    }
 
     private fun getErrorMessage(exception: Exception): String {
         return when {

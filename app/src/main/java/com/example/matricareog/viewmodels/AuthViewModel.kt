@@ -29,7 +29,9 @@ class AuthViewModel(
 
 
 
-
+    init {
+        checkAuthState()
+    }
 
     fun signUp(email: String, password: String, confirmPassword: String, fullName: String) {
         val validationError = validateSignUpInputs(email, password, confirmPassword, fullName)
@@ -117,4 +119,26 @@ class AuthViewModel(
     private fun isValidEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
+
+    fun checkAuthState() {
+        viewModelScope.launch {
+            val result = userRepository.checkCurrentUser()
+            _authState.value = result
+
+            if (result is AuthResult.Success) {
+                _currentUser.value = result.user
+            } else {
+                _currentUser.value = null
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            val result = userRepository.logout()
+            _authState.value = result
+            _currentUser.value = null
+        }
+    }
+
 }

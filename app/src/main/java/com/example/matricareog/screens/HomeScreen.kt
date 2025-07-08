@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Card
+import androidx.compose.material.IconButton
 import androidx.compose.material.Icon as MaterialIcon
 import androidx.compose.material.Text as MaterialText
 import androidx.compose.material.icons.Icons
@@ -41,7 +42,8 @@ fun HomeScreen(
     onTrackHealthClicked: () -> Unit = {},
     onMaternalGuideClicked: () -> Unit = {},
     onReportHistoryClicked: () -> Unit = {},
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    onLogoutClicked: () -> Unit
 )
 {
     val currentUserState = authViewModel.currentUser.collectAsState()
@@ -62,7 +64,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                TopBar()
+                TopBar(authViewModel, onLogoutClicked)
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -203,7 +205,8 @@ private val horizontalFeatureCards = listOf(
 )
 
 @Composable
-fun TopBar() {
+fun TopBar(authViewModel: AuthViewModel,
+          onLogoutClicked: () -> Unit ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -233,13 +236,19 @@ fun TopBar() {
                 fontSize = 20.sp
             )
         }
-
-        Icon(
-            imageVector = Icons.Default.Notifications,
-            contentDescription = "Notifications",
-            tint = Color(0xFFE91E63),
-            modifier = Modifier.size(28.dp)
-        )
+        IconButton(
+            onClick = {
+                authViewModel.logout()
+                onLogoutClicked()
+            },
+        ) {
+            Icon(
+                imageVector = Icons.Default.Logout,
+                contentDescription = "Logout",
+                tint = Color(0xFFE91E63),
+                modifier = Modifier.size(28.dp)
+            )
+        }
     }
 }
 
