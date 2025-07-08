@@ -109,7 +109,6 @@ class MatriCareRepository(
         }
     }
 
-    // Also update getUserRiskHistory() method:
     fun getUserRiskHistory(): Flow<Result<List<RiskHistoryItem>>> = flow {
         try {
             val currentUser = auth.currentUser
@@ -120,11 +119,10 @@ class MatriCareRepository(
 
             Log.d(TAG, "Fetching risk history for user: ${currentUser.uid}")
 
-            // Remove orderBy to avoid index requirement
+            // Simplified query - remove orderBy and whereNotEqualTo to avoid index requirement
             val medicalHistorySnapshot = firestore
                 .collection("medical_history")
                 .whereEqualTo("userId", currentUser.uid)
-                .whereNotEqualTo("mlRiskLevel", null)
                 .get()
                 .await()
 
@@ -134,6 +132,7 @@ class MatriCareRepository(
             medicalHistorySnapshot.documents.forEach { document ->
                 val medicalHistory = document.toObject(MedicalHistory::class.java)
                 medicalHistory?.let { history ->
+                    // Filter for non-null and non-empty mlRiskLevel in code instead of query
                     if (!history.mlRiskLevel.isNullOrEmpty()) {
                         val predictionDate = history.mlPredictionTimestamp ?: history.createdAt
                         val formattedDate = dateFormat.format(Date(predictionDate))
@@ -151,7 +150,7 @@ class MatriCareRepository(
                 }
             }
 
-            // Sort in memory by timestamp (descending)
+            // Sort in memory by timestamp (descending - most recent first)
             val sortedRiskHistory = riskHistory.sortedByDescending { it.timestamp }
 
             Log.d(TAG, "Found ${sortedRiskHistory.size} risk history records")

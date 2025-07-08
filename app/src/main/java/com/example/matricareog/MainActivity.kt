@@ -112,10 +112,6 @@ class MainActivity : ComponentActivity() {
                                 currentPageIndex = 3
                             )
                         }
-
-                        // ----------------------
-                        // Authentication Flow
-                        // ----------------------
                         composable(Routes.AuthChoice) {
                             LoginSignup(
                                 onSignUpClick = { navController.navigate(Routes.Signup) },
@@ -151,7 +147,7 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.Home) {
                             val userId = currentUser?.uid ?: ""
                             HomeScreen(
-                                matriCareViewModel = matriCareViewModel,
+                                authViewModel = authViewModel,
                                 onTrackHealthClicked = {
                                     navController.navigate(Routes.medicalHistory1Route(userId))
                                 },
@@ -211,7 +207,8 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { navController.popBackStack() },
                                 onShareClick = { shareReport(userId) },
                                 reportViewModel = reportAnalysisViewModel,
-                                medicalHistoryViewModel = medicalHistoryViewModel
+                                medicalHistoryViewModel = medicalHistoryViewModel,
+                                authViewModel= authViewModel
                             )
                         }
 
@@ -258,4 +255,26 @@ class MainActivity : ComponentActivity() {
             android.util.Log.e("MainActivity", "Error sharing report", e)
         }
     }
+}
+
+object Routes {
+    const val Welcome1 = "WelcomeScreenOne"
+    const val Welcome2 = "WelcomeScreenTwo"
+    const val Welcome3 = "WelcomeScreenThree"
+    const val GetStarted = "GetStarted"
+    const val AuthChoice = "auth_choice"
+    const val Login = "LoginScreen"
+    const val Signup = "SignUpScreen"
+    const val Home = "HomeScreen"
+    const val MaternalGuide = "MaternalGuideScreen"
+
+    // ✅ Use '/{userId}' to define placeholders correctly
+    const val MedicalHistory1 = "WelcomeScreenOne/{userId}"
+    const val MedicalHistory2 = "WelcomeScreenTwo/{userId}"
+    const val ReportAnalysis = "ReportAnalysisScreen/{userId}"
+    const val MATRICARE = "GraphReportScreen"
+    // ✅ Use these functions to generate complete route strings at runtime
+    fun medicalHistory1Route(userId: String) = "WelcomeScreenOne/$userId"
+    fun medicalHistory2Route(userId: String) = "WelcomeScreenTwo/$userId"
+    fun reportAnalysisRoute(userId: String) = "ReportAnalysisScreen/$userId"
 }

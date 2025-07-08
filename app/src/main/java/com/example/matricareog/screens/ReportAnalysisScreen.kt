@@ -40,6 +40,7 @@ import com.example.matricareog.model.PersonalInformation
 import com.example.matricareog.model.PregnancyHistory
 import com.example.matricareog.R
 import com.example.matricareog.repository.ReportRepository
+import com.example.matricareog.viewmodels.AuthViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +50,8 @@ fun ReportAnalysisScreen(
     onBackClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     reportViewModel: ReportAnalysisViewModel,
-    medicalHistoryViewModel: MedicalHistoryViewModel
+    medicalHistoryViewModel: MedicalHistoryViewModel,
+    authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current
 
@@ -69,6 +71,10 @@ fun ReportAnalysisScreen(
     // Debug states
     var showDebugInfo by remember { mutableStateOf(false) }
 
+    // Get current user data (if needed)
+    val currentUserState = authViewModel.currentUser.collectAsState()
+    val currentUser = currentUserState.value
+
     // Initialize ML model when screen loads
     LaunchedEffect(Unit) {
         println("🔥 ReportAnalysisScreen: Starting ML model initialization")
@@ -86,10 +92,11 @@ fun ReportAnalysisScreen(
 
         if (isModelReady && personalInfo != null && pregnancyHistory != null) {
             println("🔥 All conditions met - processing ML analysis")
+            val actualUserName = currentUser?.fullName ?: "Patient"
             reportViewModel.processMLAnalysisFromLiveData(
                 personalInfo = personalInfo!!,
                 pregnancyHistory = pregnancyHistory!!,
-                userName = "Patient"
+                userName = actualUserName
             )
         } else {
             println("🔥 Conditions not met:")
@@ -99,14 +106,19 @@ fun ReportAnalysisScreen(
         }
     }
 
+    // Add this state variable at the top of ReportAnalysisScreen
+    var hasAutoSaved by remember { mutableStateOf(false) }
+
+// Replace the existing LaunchedEffect with this:
     LaunchedEffect(generatedReport, mlPrediction) {
-        // Auto-save when both report and ML prediction are available
-        if (generatedReport != null && mlPrediction != null && personalInfo != null && pregnancyHistory != null) {
+        // Auto-save when both report and ML prediction are available (only once)
+        if (generatedReport != null && mlPrediction != null && personalInfo != null && pregnancyHistory != null && !hasAutoSaved) {
             println("🔄 Auto-saving report to Firebase...")
             medicalHistoryViewModel.saveCompleteDataToFirebase(
                 userId = userId,
                 mlPrediction = mlPrediction
             )
+            hasAutoSaved = true // Prevent future auto-saves
         }
     }
 

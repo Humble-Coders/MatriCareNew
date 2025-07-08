@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.matricareog.model.ChartData
 import com.example.matricareog.model.MatriCareState
 import com.example.matricareog.repository.MatriCareRepository
 import com.example.matricareog.viewmodels.MatriCareViewModel
@@ -405,6 +406,8 @@ private fun ParameterChip(
     }
 }
 
+// Replace the PredictionHistoryContent composable in GraphReportScreen.kt
+
 @Composable
 private fun PredictionHistoryContent(
     predictionHistory: List<MatriCareRepository.PredictionHistoryItem>,
@@ -449,13 +452,31 @@ private fun PredictionHistoryContent(
                             }
                         }
                         is MatriCareState.Success -> {
-                            LineChartView(
-                                data = chartData.chartData.hemoglobinData.map { it.hemoglobin },
-                                labels = chartData.chartData.hemoglobinData.map { it.date },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            )
+                            // Get the correct data and labels based on selected parameter
+                            val (dataValues, labels) = getChartDataForParameter(chartData.chartData, selectedParameter)
+
+                            if (dataValues.isNotEmpty() && labels.isNotEmpty()) {
+                                LineChartView(
+                                    data = dataValues,
+                                    labels = labels,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No data available for $selectedParameter",
+                                        color = Color.Gray,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
                         }
                         is MatriCareState.Error -> {
                             ErrorMessage(
@@ -468,7 +489,7 @@ private fun PredictionHistoryContent(
             }
         }
 
-        // History List Section
+        // Rest of the function remains the same...
         item {
             Text(
                 text = "Medical History Records",
@@ -513,6 +534,57 @@ private fun PredictionHistoryContent(
     }
 }
 
+// Add this helper function to get the correct data for each parameter
+private fun getChartDataForParameter(
+    chartData: ChartData,
+    selectedParameter: String
+): Pair<List<Double>, List<String>> {
+    return when (selectedParameter.lowercase()) {
+        "hemoglobin" -> {
+            val data = chartData.hemoglobinData.map { it.hemoglobin }
+            val labels = chartData.hemoglobinData.map { it.date }
+            Pair(data, labels)
+        }
+        "hba1c" -> {
+            val data = chartData.hba1cData.map { it.hba1c }
+            val labels = chartData.hba1cData.map { it.date }
+            Pair(data, labels)
+        }
+        "glucose", "blood glucose" -> {
+            val data = chartData.glucoseData.map { it.glucose }
+            val labels = chartData.glucoseData.map { it.date }
+            Pair(data, labels)
+        }
+        "blood pressure" -> {
+            // For blood pressure, we'll show systolic values
+            val data = chartData.bloodPressureData.map { it.systolicBP }
+            val labels = chartData.bloodPressureData.map { it.date }
+            Pair(data, labels)
+        }
+        "heart rate", "pulse" -> {
+            val data = chartData.pulseData.map { it.pulseRate }
+            val labels = chartData.pulseData.map { it.date }
+            Pair(data, labels)
+        }
+        "body temperature", "temperature" -> {
+            val data = chartData.temperatureData.map { it.bodyTemperature }
+            val labels = chartData.temperatureData.map { it.date }
+            Pair(data, labels)
+        }
+        "respiration rate", "respiration" -> {
+            val data = chartData.respirationData.map { it.respirationRate }
+            val labels = chartData.respirationData.map { it.date }
+            Pair(data, labels)
+        }
+        else -> {
+            // Default to hemoglobin if parameter not recognized
+            val data = chartData.hemoglobinData.map { it.hemoglobin }
+            val labels = chartData.hemoglobinData.map { it.date }
+            Pair(data, labels)
+        }
+    }
+}
+
 @Composable
 private fun RiskHistoryContent(
     riskHistory: List<MatriCareRepository.RiskHistoryItem>,
@@ -525,55 +597,6 @@ private fun RiskHistoryContent(
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Chart Section
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Health Metrics Overview",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    when (chartData) {
-                        is MatriCareState.Loading -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(color = Color(0xFFE91E63))
-                            }
-                        }
-                        is MatriCareState.Success -> {
-                            LineChartView(
-                                data = chartData.chartData.hemoglobinData.map { it.hemoglobin },
-                                labels = chartData.chartData.hemoglobinData.map { it.date },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                            )
-                        }
-                        is MatriCareState.Error -> {
-                            ErrorMessage(
-                                message = chartData.message,
-                                onRetry = onRetry
-                            )
-                        }
-                    }
-                }
-            }
-        }
 
         // Risk History List Section
         item {

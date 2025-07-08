@@ -20,6 +20,7 @@ import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,21 +32,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matricareog.R
+import com.example.matricareog.viewmodels.AuthViewModel
 import com.example.matricareog.viewmodels.MatriCareViewModel
 
 @Composable
 fun HomeScreen(
-    matriCareViewModel: MatriCareViewModel,
-    onNavigateToMedicalHistory: (String) -> Unit = {},
     onNavigateToReports: (String) -> Unit = {},
     onTrackHealthClicked: () -> Unit = {},
     onMaternalGuideClicked: () -> Unit = {},
-    onReportHistoryClicked: () -> Unit = {}
+    onReportHistoryClicked: () -> Unit = {},
+    authViewModel: AuthViewModel
 )
 {
-    // You can later extract user data from matriCareViewModel.uiState if needed
-    val userName = "Sarah" // dummy
-    val userId = "dummyUserId" // replace with real userId later
+    val currentUserState = authViewModel.currentUser.collectAsState()
+    val currentUser = currentUserState.value
+    val userName = currentUser?.fullName ?: "User"
+    val userId = currentUser?.uid ?: ""
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
