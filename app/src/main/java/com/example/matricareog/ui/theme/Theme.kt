@@ -35,20 +35,12 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun MatricareogTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = false, // Always force light theme
+    dynamicColor: Boolean = false, // Disable dynamic colors
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    // Always use light color scheme regardless of system theme
+    val colorScheme = LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

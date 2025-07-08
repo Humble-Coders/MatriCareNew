@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -83,12 +84,11 @@ fun SignUpScreen(
     LaunchedEffect(authState) {
         when (val state = authState) {
             is AuthResult.Success -> {
-                authViewModel.clearAuthState()  // Now this won't show loading
                 onNavigateToHome()
             }
             is AuthResult.Error -> {
                 if (state.message != "Not authenticated") {
-                    println("Sign up error: ${state.message}")
+                    // Error will be displayed in UI
                 }
             }
             AuthResult.Loading -> {
@@ -97,6 +97,13 @@ fun SignUpScreen(
             AuthResult.Idle -> {
                 // Do nothing, waiting for user action
             }
+        }
+    }
+
+// Clear error state when component is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            authViewModel.clearAuthState()
         }
     }
 
@@ -134,6 +141,13 @@ fun SignUpScreen(
             color = darkGray,
             modifier = Modifier.padding(bottom = 40.dp)
         )
+
+        if (authState is AuthResult.Error && (authState as AuthResult.Error).message != "Not authenticated") {
+            ErrorMessage(
+                message = (authState as AuthResult.Error).message,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+        }
 
         // Full Name Field
         OutlinedTextField(
@@ -198,13 +212,18 @@ fun SignUpScreen(
             enabled = !isLoading
         )
 
-        // Password Field
+// Password validation states
+        val isPasswordError = password.isNotBlank() && password.length < 6
+        val isConfirmPasswordError = confirmPassword.isNotBlank() &&
+                password.isNotBlank() && password != confirmPassword
+
+// Password Field with validation
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             placeholder = {
                 Text(
-                    text = "Create password",
+                    text = "Create password (min 6 characters)",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -213,7 +232,7 @@ fun SignUpScreen(
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Lock icon",
-                    tint = darkGray
+                    tint = if (isPasswordError) Color(0xFFC62828) else darkGray
                 )
             },
             trailingIcon = {
@@ -221,10 +240,14 @@ fun SignUpScreen(
                     Icon(
                         imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                         contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                        tint = darkGray
+                        tint = if (isPasswordError) Color(0xFFC62828) else darkGray
                     )
                 }
             },
+            isError = isPasswordError,
+            supportingText = if (isPasswordError) {
+                { Text("Password must be at least 6 characters", color = Color(0xFFC62828)) }
+            } else null,
             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -233,14 +256,16 @@ fun SignUpScreen(
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color.LightGray,
                 focusedBorderColor = primaryPink,
-                cursorColor = primaryPink
+                cursorColor = primaryPink,
+                errorBorderColor = Color(0xFFC62828),
+                errorLabelColor = Color(0xFFC62828)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
             enabled = !isLoading
         )
 
-        // Confirm Password Field
+// Confirm Password Field with validation
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
@@ -255,7 +280,7 @@ fun SignUpScreen(
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Lock icon",
-                    tint = darkGray
+                    tint = if (isConfirmPasswordError) Color(0xFFC62828) else darkGray
                 )
             },
             trailingIcon = {
@@ -263,10 +288,14 @@ fun SignUpScreen(
                     Icon(
                         imageVector = if (isConfirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                         contentDescription = if (isConfirmPasswordVisible) "Hide password" else "Show password",
-                        tint = darkGray
+                        tint = if (isConfirmPasswordError) Color(0xFFC62828) else darkGray
                     )
                 }
             },
+            isError = isConfirmPasswordError,
+            supportingText = if (isConfirmPasswordError) {
+                { Text("Passwords do not match", color = Color(0xFFC62828)) }
+            } else null,
             visualTransformation = if (isConfirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -275,13 +304,14 @@ fun SignUpScreen(
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color.LightGray,
                 focusedBorderColor = primaryPink,
-                cursorColor = primaryPink
+                cursorColor = primaryPink,
+                errorBorderColor = Color(0xFFC62828),
+                errorLabelColor = Color(0xFFC62828)
             ),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             singleLine = true,
             enabled = !isLoading
         )
-
         // Terms and Privacy Row with clickable text
         Row(
             modifier = Modifier

@@ -5,15 +5,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -28,6 +31,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,16 +71,14 @@ fun LoginScreen(
     val lightGray = Color(0xFFF5F5F5)
     val darkGray = Color(0xFF757575)
 
-    // Handle authentication state
     LaunchedEffect(authState) {
         when (val state = authState) {
             is AuthResult.Success -> {
-                authViewModel.clearAuthState()  // Now this won't show loading
                 onNavigateToHome()
             }
             is AuthResult.Error -> {
                 if (state.message != "Not authenticated") {
-                    println("Sign up error: ${state.message}")
+                    // Error will be displayed in UI
                 }
             }
             AuthResult.Loading -> {
@@ -85,6 +87,12 @@ fun LoginScreen(
             AuthResult.Idle -> {
                 // Do nothing, waiting for user action
             }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            authViewModel.clearAuthState()
         }
     }
 
@@ -128,7 +136,15 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 48.dp)
             )
 
-            // Email Field
+            if (authState is AuthResult.Error && (authState as AuthResult.Error).message != "Not authenticated") {
+                ErrorMessage(
+                    message = (authState as AuthResult.Error).message,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+            }
+
+val isEmailError = email.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -143,9 +159,13 @@ fun LoginScreen(
                     Icon(
                         imageVector = Icons.Default.Email,
                         contentDescription = "Email icon",
-                        tint = darkGray
+                        tint = if (isEmailError) Color(0xFFC62828) else darkGray
                     )
                 },
+                isError = isEmailError,
+                supportingText = if (isEmailError) {
+                    { Text("Please enter a valid email address", color = Color(0xFFC62828)) }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -153,7 +173,9 @@ fun LoginScreen(
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.LightGray,
                     focusedBorderColor = primaryPink,
-                    cursorColor = primaryPink
+                    cursorColor = primaryPink,
+                    errorBorderColor = Color(0xFFC62828),
+                    errorLabelColor = Color(0xFFC62828)
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
@@ -265,5 +287,37 @@ fun LoginScreen(
             }
         }
 
+    }
+}
+
+// Add this composable in both LoginScreen.kt and SignUpScreen.kt files
+@Composable
+fun ErrorMessage(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                Color(0xFFFFEBEE),
+                RoundedCornerShape(8.dp)
+            )
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.ErrorOutline,
+            contentDescription = "Error",
+            tint = Color(0xFFC62828),
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = message,
+            color = Color(0xFFC62828),
+            fontSize = 14.sp,
+            lineHeight = 18.sp
+        )
     }
 }

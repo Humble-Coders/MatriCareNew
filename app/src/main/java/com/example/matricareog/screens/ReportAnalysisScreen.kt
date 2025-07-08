@@ -1,6 +1,12 @@
 package com.example.matricareog.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowBack
@@ -21,6 +27,7 @@ import com.example.matricareog.model.MetricStatus
 import com.example.matricareog.viewmodels.ReportAnalysisViewModel
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -29,6 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -738,39 +748,68 @@ fun QuickStatCard(
 ) {
     Card(
         modifier = modifier
-            .size(width = 110.dp, height = 110.dp)
+            .size(width = 120.dp, height = 120.dp)
             .zIndex(10f),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.SpaceBetween
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                        )
+                    )
+                )
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(24.dp)
-            )
-            Column {
-                Text(
-                    text = value,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = unit,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = iconColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(12.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Column(
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = value,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        letterSpacing = (-0.5).sp
+                    )
+                    Text(
+                        text = unit,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        letterSpacing = 0.5.sp
+                    )
+                }
             }
         }
     }
@@ -784,32 +823,35 @@ fun QuickStatsSection(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.background
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             QuickStatCard(
                 icon = Icons.Default.Favorite,
                 iconColor = Color(0xFFE91E63),
                 value = bpm.toString(),
-                unit = "BPM"
+                unit = "BPM",
+                modifier = Modifier.weight(1f)
             )
             QuickStatCard(
                 icon = Icons.Default.Speed,
                 iconColor = Color(0xFF2196F3),
                 value = bloodPressure,
-                unit = "BP"
+                unit = "BP",
+                modifier = Modifier.weight(1f)
             )
             QuickStatCard(
                 icon = Icons.Default.DeviceThermostat,
                 iconColor = Color(0xFF4CAF50),
                 value = "${temperature}°",
-                unit = "TEMP"
+                unit = "TEMP",
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -915,86 +957,86 @@ private fun createHealthMetric(
     )
 }
 
-@Composable
-fun HealthMetricCard(
-    metric: HealthMetric
-) {
-    val statusColor = when(metric.status) {
-        MetricStatus.NORMAL -> Color(0xFF4CAF50)
-        MetricStatus.WARNING -> Color(0xFFFF9800)
-        MetricStatus.CRITICAL -> Color(0xFFF44336)
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = metric.icon),
-                        contentDescription = null,
-                        tint = statusColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = metric.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black
-                    )
-                }
-                IconButton(
-                    onClick = { /* Handle info click */ },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Info",
-                        tint = Color(0xFFE91E63),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-
-            Text(
-                text = "${metric.value} ${metric.unit}",
-                fontSize = 16.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(start = 28.dp, top = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            GradientProgressIndicator(
-                currentValue = metric.currentValue,
-                minValue = metric.rangeMin,
-                maxValue = metric.rangeMax
-            )
-
-            Text(
-                text = "Range: ${metric.normalRange}",
-                fontSize = 12.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-    }
-}
+//@Composable
+//fun HealthMetricCard(
+//    metric: HealthMetric
+//) {
+//    val statusColor = when(metric.status) {
+//        MetricStatus.NORMAL -> Color(0xFF4CAF50)
+//        MetricStatus.WARNING -> Color(0xFFFF9800)
+//        MetricStatus.CRITICAL -> Color(0xFFF44336)
+//    }
+//
+//    Card(
+//        modifier = Modifier.fillMaxWidth(),
+//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+//        colors = CardDefaults.cardColors(containerColor = Color.White),
+//        shape = RoundedCornerShape(12.dp)
+//    ) {
+//        Column(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(16.dp)
+//        ) {
+//            Row(
+//                modifier = Modifier.fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Row(
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    Icon(
+//                        painter = painterResource(id = metric.icon),
+//                        contentDescription = null,
+//                        tint = statusColor,
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                    Spacer(modifier = Modifier.width(8.dp))
+//                    Text(
+//                        text = metric.title,
+//                        fontSize = 20.sp,
+//                        fontWeight = FontWeight.Medium,
+//                        color = Color.Black
+//                    )
+//                }
+//                IconButton(
+//                    onClick = { /* Handle info click */ },
+//                    modifier = Modifier.size(24.dp)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Info,
+//                        contentDescription = "Info",
+//                        tint = Color(0xFFE91E63),
+//                        modifier = Modifier.size(24.dp)
+//                    )
+//                }
+//            }
+//
+//            Text(
+//                text = "${metric.value} ${metric.unit}",
+//                fontSize = 16.sp,
+//                color = Color.Gray,
+//                modifier = Modifier.padding(start = 28.dp, top = 4.dp)
+//            )
+//
+//            Spacer(modifier = Modifier.height(12.dp))
+//
+//            GradientProgressIndicator(
+//                currentValue = metric.currentValue,
+//                minValue = metric.rangeMin,
+//                maxValue = metric.rangeMax
+//            )
+//
+//            Text(
+//                text = "Range: ${metric.normalRange}",
+//                fontSize = 12.sp,
+//                color = Color.Gray,
+//                modifier = Modifier.padding(top = 4.dp)
+//            )
+//        }
+//    }
+//}
 
 @Composable
 fun GradientProgressIndicator(
@@ -1162,6 +1204,381 @@ private fun EmptyStateScreen(onRetry: () -> Unit) {
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
         ) {
             Text("Generate Analysis")
+        }
+    }
+}
+
+
+
+
+@Composable
+fun EnhancedGradientProgressIndicator(
+    currentValue: Float,
+    minValue: Float,
+    maxValue: Float,
+    modifier: Modifier = Modifier
+) {
+    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+
+    // Determine status based on progress
+    val status = when {
+        progress < 0.3f -> "Low"
+        progress > 0.7f -> "High"
+        else -> "Normal"
+    }
+
+    val statusColor = when(status) {
+        "Low" -> Color(0xFFFF6B6B)
+        "High" -> Color(0xFFFF8A50)
+        else -> Color(0xFF4ECDC4)
+    }
+
+    Column(modifier = modifier) {
+        // Progress track with glassmorphism effect
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(12.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xFFF5F5F5))
+        ) {
+            // Background gradient track
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF4ECDC4).copy(alpha = 0.2f),
+                                Color(0xFF44E5A3).copy(alpha = 0.2f),
+                                Color(0xFFFFE66D).copy(alpha = 0.2f),
+                                Color(0xFFFF8A50).copy(alpha = 0.2f),
+                                Color(0xFFFF6B6B).copy(alpha = 0.2f)
+                            )
+                        )
+                    )
+            )
+
+            // Filled progress with vibrant gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF4ECDC4),
+                                Color(0xFF44E5A3),
+                                Color(0xFFFFE66D),
+                                Color(0xFFFF8A50),
+                                Color(0xFFFF6B6B)
+                            )
+                        )
+                    )
+            )
+
+            // Animated indicator dot
+            Box(
+                modifier = Modifier
+                    .size(16.dp)
+                    .offset(x = (progress * (1f - 16.dp.value / 300.dp.value) * 300.dp))
+                    .offset(y = (-2).dp)
+                    .background(
+                        color = statusColor,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 2.dp,
+                        color = Color.White,
+                        shape = CircleShape
+                    )
+            )
+        }
+
+        // Status indicator
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = status,
+                fontSize = 12.sp,
+                color = statusColor,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                text = "${(progress * 100).toInt()}%",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun ModernProgressIndicator(
+    currentValue: Float,
+    minValue: Float,
+    maxValue: Float,
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+
+    // Create segments for different zones
+    val segments = listOf(
+        ProgressSegment(0f, 0.3f, Color(0xFF4ECDC4), "Optimal"),
+        ProgressSegment(0.3f, 0.7f, Color(0xFF44E5A3), "Normal"),
+        ProgressSegment(0.7f, 0.9f, Color(0xFFFFE66D), "Caution"),
+        ProgressSegment(0.9f, 1f, Color(0xFFFF6B6B), "Critical")
+    )
+
+    val currentSegment = segments.find { progress >= it.start && progress <= it.end }
+
+    Column(modifier = modifier) {
+        // Multi-segment progress bar
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+        ) {
+            // Draw segments
+            segments.forEach { segment ->
+                val segmentWidth = segment.end - segment.start
+                val segmentAlpha = if (progress >= segment.start) {
+                    if (progress <= segment.end) {
+                        ((progress - segment.start) / segmentWidth).coerceIn(0f, 1f)
+                    } else 1f
+                } else 0f
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(segment.end)
+                        .offset(x = (segment.start * 300.dp))
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    segment.color.copy(alpha = 0.3f),
+                                    segment.color.copy(alpha = segmentAlpha)
+                                )
+                            )
+                        )
+                )
+            }
+
+            // Current position indicator
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .fillMaxHeight()
+                    .offset(x = (progress * 297.dp))
+                    .background(
+                        color = currentSegment?.color ?: Color.Gray,
+                        shape = RoundedCornerShape(1.5.dp)
+                    )
+            )
+        }
+
+        // Zone indicators
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            segments.forEach { segment ->
+                Text(
+                    text = segment.label,
+                    fontSize = 10.sp,
+                    color = if (currentSegment == segment) segment.color else Color.Gray.copy(alpha = 0.6f),
+                    fontWeight = if (currentSegment == segment) FontWeight.Bold else FontWeight.Normal
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CircularProgressIndicator(
+    currentValue: Float,
+    minValue: Float,
+    maxValue: Float,
+    title: String,
+    modifier: Modifier = Modifier
+) {
+    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+    )
+
+    val statusColor = when {
+        progress < 0.3f -> Color(0xFF4ECDC4)
+        progress < 0.7f -> Color(0xFF44E5A3)
+        progress < 0.9f -> Color(0xFFFFE66D)
+        else -> Color(0xFFFF6B6B)
+    }
+
+    Box(
+        modifier = modifier.size(80.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Background circle
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val strokeWidth = 8.dp.toPx()
+            val radius = (size.minDimension - strokeWidth) / 2
+
+            // Background arc
+            drawArc(
+                color = Color(0xFFF5F5F5),
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            )
+
+            // Progress arc
+            drawArc(
+                brush = Brush.sweepGradient(
+                    colors = listOf(
+                        statusColor.copy(alpha = 0.3f),
+                        statusColor
+                    )
+                ),
+                startAngle = -90f,
+                sweepAngle = animatedProgress * 360f,
+                useCenter = false,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            )
+        }
+
+        // Center content
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "${(animatedProgress * 100).toInt()}%",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = statusColor
+            )
+            Text(
+                text = title,
+                fontSize = 8.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+
+
+// Data class for progress segments
+data class ProgressSegment(
+    val start: Float,
+    val end: Float,
+    val color: Color,
+    val label: String
+)
+
+// Updated HealthMetricCard to use the new progress indicator
+@Composable
+fun HealthMetricCard(
+    metric: HealthMetric
+) {
+    val statusColor = when(metric.status) {
+        MetricStatus.NORMAL -> Color(0xFF4ECDC4)
+        MetricStatus.WARNING -> Color(0xFFFFE66D)
+        MetricStatus.CRITICAL -> Color(0xFFFF6B6B)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                color = statusColor.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = metric.icon),
+                            contentDescription = null,
+                            tint = statusColor,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = metric.title,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Black
+                        )
+                        Text(
+                            text = "${metric.value} ${metric.unit}",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                // Circular progress indicator
+                CircularProgressIndicator(
+                    currentValue = metric.currentValue,
+                    minValue = metric.rangeMin,
+                    maxValue = metric.rangeMax,
+                    title = "Level"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Enhanced linear progress indicator
+            EnhancedGradientProgressIndicator(
+                currentValue = metric.currentValue,
+                minValue = metric.rangeMin,
+                maxValue = metric.rangeMax
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Normal range text
+            Text(
+                text = "Normal Range: ${metric.normalRange} ${metric.unit}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
         }
     }
 }

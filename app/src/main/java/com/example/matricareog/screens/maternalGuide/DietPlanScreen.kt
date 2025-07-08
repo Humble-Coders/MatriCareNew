@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matricareog.screens.BottomNavigationBar
 
 // Data classes for diet recommendations
 data class DietRecommendation(
@@ -48,7 +47,6 @@ fun DietPlanScreen(
             DietPlanTopBar(onBackClick = onBackClick)
         },
         bottomBar = {
-            BottomNavigationBar()
         },
         containerColor = Color(0xFFF8F9FA)
     ) { paddingValues ->

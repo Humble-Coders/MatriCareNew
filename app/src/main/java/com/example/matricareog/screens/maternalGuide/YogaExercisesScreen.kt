@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
-import com.example.matricareog.screens.BottomNavigationBar
 
 // Data class for yoga poses
 data class YogaPose(
@@ -44,7 +43,6 @@ fun YogaExercisesScreen(
             YogaExercisesTopBar(onBackClick = onBackClick)
         },
         bottomBar = {
-            BottomNavigationBar()
         },
         containerColor = Color(0xFFF8F9FA)
     ) { paddingValues ->

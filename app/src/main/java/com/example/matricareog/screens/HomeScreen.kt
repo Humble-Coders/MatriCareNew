@@ -1,41 +1,59 @@
 package com.example.matricareog.screens
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Card
-import androidx.compose.material.IconButton
-import androidx.compose.material.Icon as MaterialIcon
-import androidx.compose.material.Text as MaterialText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matricareog.R
 import com.example.matricareog.viewmodels.AuthViewModel
-import com.example.matricareog.viewmodels.MatriCareViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToReports: (String) -> Unit = {},
@@ -44,269 +62,655 @@ fun HomeScreen(
     onReportHistoryClicked: () -> Unit = {},
     authViewModel: AuthViewModel,
     onLogoutClicked: () -> Unit,
-    onDietClicked: () -> Unit ,
-    onYogaClicked: () -> Unit  ,
+    onDietClicked: () -> Unit,
+    onYogaClicked: () -> Unit,
     onDoClicked: () -> Unit
-)
-{
+) {
     val currentUserState = authViewModel.currentUser.collectAsState()
     val currentUser = currentUserState.value
-    val userName = currentUser?.fullName ?: "User"
+    val userName = currentUser?.fullName?.split(" ")?.firstOrNull() ?: "User"
     val userId = currentUser?.uid ?: ""
 
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF8F9FA),
+                        Color(0xFFFFFFFF)
+                    )
+                )
+            )
+    ) {
+        // Header Section
+        HeaderSection(
+            authViewModel = authViewModel,
+            onLogoutClicked = onLogoutClicked
+        )
 
-    Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(top = 12.dp, bottom = 65.dp)
-                .statusBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Welcome Section
             item {
-                TopBar(authViewModel, onLogoutClicked)
-                Spacer(modifier = Modifier.height(12.dp))
+                WelcomeSection(userName = userName)
             }
 
+            // Health Tracking Card
             item {
-                Text(
-                    text = "Good Morning,",
-                    fontSize = 24.sp,
-                    color = Color.Black
-                )
-                Text(
-                    text = userName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 28.sp,
-                    color = Color(0xFFE91E63)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                HealthTrackingCard(onClick = onTrackHealthClicked)
             }
 
-            items(featureCards) { card ->
-                FeatureCard(
-                    title = card.title,
-                    subtitle = card.subtitle,
-                    bgColor = card.bgColor,
-                    icon = card.icon,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        when (card.title) {
-                            "Track your health with AI" -> onTrackHealthClicked()
-                            "Refer the maternal guide" -> onMaternalGuideClicked()
-                            "Report History" -> {
-                                onReportHistoryClicked()
-                                onNavigateToReports(userId) // uses callback
-                            }
-                        }
-                    }
+            // Quick Actions Section
+            item {
+                QuickActionsSection(
+                    onMaternalGuideClicked = onMaternalGuideClicked,
+                    onReportHistoryClicked = onReportHistoryClicked,
+                    onNavigateToReports = onNavigateToReports,
+                    userId = userId
                 )
             }
 
+            // Wellness Programs Section
             item {
-                Spacer(modifier = Modifier.height(6.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(horizontalFeatureCards) { card ->
-                        val cardWidth = (screenWidth * 0.68f).coerceAtMost(240.dp)
-                        FeatureCard(
-                            title = card.title,
-                            subtitle = card.subtitle,
-                            bgColor = card.bgColor,
-                            icon = card.icon,
-                            extraActionText = card.extraActionText,
-                            modifier = Modifier.width(cardWidth),
-                            onClick = {
-                                when (card.title) {
-                                    "Diet Plan" -> {onDietClicked} // Handle Diet Plan click
-                                    "Yoga" -> {onYogaClicked} // Handle Yoga click
-                                    "Do's & Don'ts" -> {onDoClicked} // Handle Meditation click
-                                }
-                            }
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
+                WellnessProgramsSection(
+                    onDietClicked = onDietClicked,
+                    onYogaClicked = onYogaClicked,
+                    onDoClicked = onDoClicked
+                )
+            }
+
+            // Bottom spacing
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
-
-        BottomNavigationBar(
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
 @Composable
-fun FeatureCard(
-    title: String,
-    subtitle: String,
-    bgColor: Color,
-    icon: ImageVector,
-    extraActionText: String? = null,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+private fun HeaderSection(
+    authViewModel: AuthViewModel,
+    onLogoutClicked: () -> Unit
 ) {
-    Card(
-        modifier = modifier
-            .padding(vertical = 5.dp)
-            .clickable(onClick = onClick),
-        backgroundColor = bgColor,
-        shape = RoundedCornerShape(20.dp),
-        elevation = 2.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp)
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = Color.DarkGray,
-                modifier = Modifier.size(30.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
-            Text(
-                text = subtitle,
-                fontSize = 14.5.sp,
-                color = Color.Gray
-            )
-
-            extraActionText?.let {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = it,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF2E7D32),
-                    fontSize = 15.sp
-                )
-            }
-        }
-    }
-}
-
-data class FeatureCardData(
-    val title: String,
-    val subtitle: String,
-    val bgColor: Color,
-    val icon: ImageVector,
-    val extraActionText: String? = null
-)
-
-private val featureCards = listOf(
-    FeatureCardData("Track your health with AI", "Personalized health monitoring", Color(0xFFF0F4FF), Icons.Default.Done),
-    FeatureCardData("Refer the maternal guide", "Expert guidance and tips", Color(0xFFE8FCE9), Icons.Default.Person),
-    FeatureCardData("Ask MomBuddy anything!", "24/7 support assistant", Color(0xFFFFEBF0), Icons.Default.Call),
-    FeatureCardData("Report History", "see previous records", Color(0xFFFFF4D9), Icons.Default.AccountBox)
-)
-
-private val horizontalFeatureCards = listOf(
-    FeatureCardData("Diet Plan", "Healthy meals for you & baby", Color(0xFFEAF4EC), Icons.Default.Favorite, "View Plan"),
-    FeatureCardData("Yoga", "Safe workouts", Color(0xFFE6F0FF), Icons.Default.Face, "Start Now"),
-    FeatureCardData("Do's & Don'ts", "Follow these advices", Color(0xFFFFF3E0), Icons.Default.Favorite, "Read More")
-)
-
-@Composable
-fun TopBar(authViewModel: AuthViewModel,
-          onLogoutClicked: () -> Unit ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .statusBarsPadding(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.user),
-                contentDescription = "Default Profile",
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-            )
+            Card(
+                shape = CircleShape,
+                modifier = Modifier.size(48.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4FF))
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = Color(0xFFE91E63),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
 
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Matri",
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
-            Text(
-                text = "Care",
-                color = Color(0xFFE91E63),
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = "MatriCare",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A)
+                )
+                Text(
+                    text = "Your wellness companion",
+                    fontSize = 12.sp,
+                    color = Color(0xFF666666)
+                )
+            }
         }
+
         IconButton(
             onClick = {
                 authViewModel.logout()
                 onLogoutClicked()
             },
+            modifier = Modifier
+                .background(
+                    Color(0xFFFFF0F3),
+                    RoundedCornerShape(12.dp)
+                )
+                .size(40.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Logout,
+                imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Logout",
                 tint = Color(0xFFE91E63),
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
     }
 }
 
 @Composable
-fun BottomNavigationBar(
-    modifier: Modifier = Modifier
-) {
-    BottomNavigation(
-        backgroundColor = Color.White,
-        elevation = 12.dp,
-        modifier = modifier.height(60.dp)
+private fun WelcomeSection(userName: String) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        BottomNavigationItem(
-            selected = true,
-            onClick = {},
-            icon = {
-                MaterialIcon(
-                    Icons.Default.Home,
-                    contentDescription = null,
-                    tint = Color(0xFFE91E63),
-                    modifier = Modifier.size(26.dp)
-                )
-            },
-            label = {
-                MaterialText(
-                    "Home",
-                    color = Color(0xFFE91E63),
-                    fontSize = 12.sp
-                )
-            }
+        Text(
+            text = "Good morning,",
+            fontSize = 16.sp,
+            color = Color(0xFF666666),
+            fontWeight = FontWeight.Normal
         )
-        BottomNavigationItem(
-            selected = false,
-            onClick = {},
-            icon = { MaterialIcon(Icons.Outlined.FavoriteBorder, null, Modifier.size(26.dp)) },
-            label = { MaterialText("MomBuddy", fontSize = 12.sp) }
+        Text(
+            text = userName,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A1A1A)
         )
-        BottomNavigationItem(
-            selected = false,
-            onClick = {},
-            icon = { MaterialIcon(Icons.Default.Person, null, Modifier.size(26.dp)) },
-            label = { MaterialText("History", fontSize = 12.sp) }
-        )
-        BottomNavigationItem(
-            selected = false,
-            onClick = {},
-            icon = { MaterialIcon(Icons.Outlined.MailOutline, null, Modifier.size(26.dp)) },
-            label = { MaterialText("Guide", fontSize = 12.sp) }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "How are you feeling today?",
+            fontSize = 14.sp,
+            color = Color(0xFF888888)
         )
     }
 }
+
+@Composable
+private fun HealthTrackingCard(onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE91E63)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFE91E63),
+                            Color(0xFFAD1457)
+                        )
+                    )
+                )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Track Your Health",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "AI-powered health monitoring",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Start tracking",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Icon(
+                    imageVector = Icons.Default.MonitorHeart,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier.size(80.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionsSection(
+    onMaternalGuideClicked: () -> Unit,
+    onReportHistoryClicked: () -> Unit,
+    onNavigateToReports: (String) -> Unit,
+    userId: String
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Quick Actions",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A)
+                )
+                Text(
+                    text = "Access your essentials",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666)
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.GridView,
+                contentDescription = null,
+                tint = Color(0xFFE91E63),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            EnhancedQuickActionCard(
+                title = "Maternal Guide",
+                subtitle = "Expert guidance & tips",
+                icon = Icons.AutoMirrored.Filled.MenuBook,
+                bgGradient = listOf(Color(0xFFE8F5E8), Color(0xFFF1F8E9)),
+                iconBgColor = Color(0xFF2E7D32),
+                iconColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = onMaternalGuideClicked
+            )
+
+            EnhancedQuickActionCard(
+                title = "Report History",
+                subtitle = "View past records",
+                icon = Icons.Default.Assessment,
+                bgGradient = listOf(Color(0xFFF0F4FF), Color(0xFFE3F2FD)),
+                iconBgColor = Color(0xFF1976D2),
+                iconColor = Color.White,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onReportHistoryClicked()
+                    onNavigateToReports(userId)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EnhancedQuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    bgGradient: List<Color>,
+    iconBgColor: Color,
+    iconColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clickable { onClick() }
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(20.dp),
+                ambientColor = Color.Black.copy(alpha = 0.1f)
+            ),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(bgGradient),
+                    shape = RoundedCornerShape(20.dp)
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Icon container with circular background
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(
+                            color = iconBgColor,
+                            shape = CircleShape
+                        )
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = Color(0xFF666666),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Action indicator
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .background(
+                            color = Color.White.copy(alpha = 0.8f),
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "Open",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = iconBgColor
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = iconBgColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WellnessProgramsSection(
+    onDietClicked: () -> Unit,
+    onYogaClicked: () -> Unit,
+    onDoClicked: () -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Wellness Programs",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A)
+                )
+                Text(
+                    text = "Your daily wellness routine",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666)
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.Spa,
+                contentDescription = null,
+                tint = Color(0xFFE91E63),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            items(
+                listOf(
+                    WellnessProgramData(
+                        title = "Diet Plan",
+                        subtitle = "Healthy meals for you & baby",
+                        bgGradient = listOf(Color(0xFFF0F8F0), Color(0xFFE8F5E8)),
+                        iconBgColor = Color(0xFF2E7D32),
+                        icon = Icons.Default.Restaurant,
+                        badge = "Daily",
+                        onClick = onDietClicked
+                    ),
+                    WellnessProgramData(
+                        title = "Yoga & Exercise",
+                        subtitle = "Safe workouts for pregnancy",
+                        bgGradient = listOf(Color(0xFFF3E5F5), Color(0xFFE1BEE7)),
+                        iconBgColor = Color(0xFF7B1FA2),
+                        icon = Icons.Default.SelfImprovement,
+                        badge = "15 min",
+                        onClick = onYogaClicked
+                    ),
+                    WellnessProgramData(
+                        title = "Do's & Don'ts",
+                        subtitle = "Essential pregnancy tips and advices",
+                        bgGradient = listOf(Color(0xFFFFF8E1), Color(0xFFFFECB3)),
+                        iconBgColor = Color(0xFFE65100),
+                        icon = Icons.Default.Lightbulb,
+                        badge = "Tips",
+                        onClick = onDoClicked
+                    )
+                )
+            ) { program ->
+                EnhancedWellnessProgramCard(
+                    program = program,
+                    modifier = Modifier.width(220.dp) // Fixed width for consistency
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnhancedWellnessProgramCard(
+    program: WellnessProgramData,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .clickable { program.onClick() }
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(24.dp),
+                ambientColor = Color.Black.copy(alpha = 0.1f)
+            ),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(program.bgGradient),
+                    shape = RoundedCornerShape(24.dp)
+                )
+        ) {
+            // Badge
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(
+                        color = Color.White.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = program.badge,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = program.iconBgColor
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Top section with icon
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .background(
+                                color = program.iconBgColor,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = program.icon,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = program.title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A1A1A)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = program.subtitle,
+                        fontSize = 13.sp,
+                        color = Color(0xFF666666),
+                        lineHeight = 18.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Bottom section with action button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color.White.copy(alpha = 0.9f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Start Now",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = program.iconBgColor
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(
+                                color = program.iconBgColor,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Updated data class
+data class WellnessProgramData(
+    val title: String,
+    val subtitle: String,
+    val bgGradient: List<Color>,
+    val iconBgColor: Color,
+    val icon: ImageVector,
+    val badge: String,
+    val onClick: () -> Unit
+)
