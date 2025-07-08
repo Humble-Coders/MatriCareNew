@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.matricareog.MedicalHistory
 import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.repository.MedicalHistoryRepository
@@ -22,6 +23,11 @@ class MedicalHistoryViewModel(
     private val _pregnancyHistory = MutableLiveData(PregnancyHistory())
     val pregnancyHistory: LiveData<PregnancyHistory> = _pregnancyHistory
 
+    // State for medical history list (now we can have multiple records)
+    private val _medicalHistoryList = MutableLiveData<List<MedicalHistory>>()
+
+    // Current selected medical history record
+    private val _currentMedicalHistory = MutableLiveData<MedicalHistory?>()
 
     // Loading state
     private val _isLoading = MutableLiveData(false)
@@ -31,6 +37,8 @@ class MedicalHistoryViewModel(
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
+    // Success state
+    private val _saveSuccess = MutableLiveData<Boolean>()
 
     // Success message with document ID
     private val _saveMessage = MutableLiveData<String?>()
@@ -50,7 +58,22 @@ class MedicalHistoryViewModel(
         println("PregnancyHistory updated in ViewModel: $pregnancyHistory") // Debug log
     }
 
+    // Store medical history in LiveData (NO Firebase save - just in-memory storage)
+    fun storeMedicalHistoryInLiveData(personalInfo: PersonalInformation, pregnancyHistory: PregnancyHistory) {
+        _personalInfo.value = personalInfo
+        _pregnancyHistory.value = pregnancyHistory
 
+        // Debug logs
+        println("Medical History stored in LiveData:")
+        println("Personal Info: $personalInfo")
+        println("Pregnancy History: $pregnancyHistory")
+
+        // Set success state to indicate data is ready for ML processing
+        _saveSuccess.value = true
+        _saveMessage.value = "Medical history ready for analysis"
+    }
+
+    // SINGLE COMPLETE SAVE: Save everything to Firebase (PersonalInfo + PregnancyHistory + ML Predictions)
     fun saveCompleteDataToFirebase(
         userId: String,
         mlPrediction: ReportRepository.RiskPrediction?

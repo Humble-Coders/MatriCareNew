@@ -20,7 +20,7 @@ import com.example.matricareog.loginsignupscreen.LoginSignupopt
 import com.example.matricareog.loginsignupscreen.SignUpScreen
 import com.example.matricareog.medicalhistoryscreens.MedicalHistoryScreenOne
 import com.example.matricareog.medicalhistoryscreens.MedicalHistoryScreenTwo
-import com.example.matricareog.reportscreen.ReportAnalysisScreen
+import com.example.matricareog.reportanalysisscreen.ReportAnalysisScreen
 import com.example.matricareog.repository.MatriCareRepository
 import com.example.matricareog.repository.MedicalHistoryRepository
 import com.example.matricareog.repository.ReportRepository

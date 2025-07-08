@@ -1,8 +1,7 @@
-package com.example.matricareog.reportscreen
+package com.example.matricareog.reportanalysisscreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -16,7 +15,6 @@ import androidx.compose.runtime.livedata.observeAsState
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.HealthMetric
 import com.example.matricareog.HealthReport
 import com.example.matricareog.HealthStatus
@@ -24,8 +22,6 @@ import com.example.matricareog.MetricStatus
 import com.example.matricareog.viewmodels.ReportViewModel
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -152,7 +148,6 @@ fun ReportAnalysisScreen(
             else -> {
                 EmptyStateScreen(
                     onRetry = {
-                        medicalHistoryViewModel.loadMedicalHistoryList(userId ?: "")
                     }
                 )
             }
