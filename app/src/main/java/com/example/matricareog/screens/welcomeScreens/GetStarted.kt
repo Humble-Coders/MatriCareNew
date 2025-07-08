@@ -1,4 +1,4 @@
-package com.example.matricareog.screens.welcomescreen
+package com.example.matricareog.screens.welcomeScreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

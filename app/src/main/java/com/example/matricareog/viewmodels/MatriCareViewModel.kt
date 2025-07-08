@@ -2,7 +2,7 @@ package com.example.matricareog.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.matricareog.MatriCareState
+import com.example.matricareog.model.MatriCareState
 import com.example.matricareog.repository.MatriCareRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

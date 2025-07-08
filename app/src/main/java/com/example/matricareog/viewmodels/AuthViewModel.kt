@@ -5,8 +5,8 @@ package com.example.matricareog.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.matricareog.AuthResult
-import com.example.matricareog.User
+import com.example.matricareog.model.AuthResult
+import com.example.matricareog.model.User
 import com.example.matricareog.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

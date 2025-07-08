@@ -1,8 +1,8 @@
 package com.example.matricareog.repository
 
 import android.util.Log
-import com.example.matricareog.AuthResult
-import com.example.matricareog.User
+import com.example.matricareog.model.AuthResult
+import com.example.matricareog.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await

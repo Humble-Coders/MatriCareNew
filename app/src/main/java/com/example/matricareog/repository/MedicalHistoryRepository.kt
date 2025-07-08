@@ -1,8 +1,8 @@
 package com.example.matricareog.repository
 
-import com.example.matricareog.MedicalHistory
-import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyHistory
+import com.example.matricareog.model.MedicalHistory
+import com.example.matricareog.model.PersonalInformation
+import com.example.matricareog.model.PregnancyHistory
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 

@@ -3,11 +3,11 @@ package com.example.matricareog.repository
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
-import com.example.matricareog.BloodPressure
-import com.example.matricareog.HealthReport
-import com.example.matricareog.HealthStatus
-import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyInfo
+import com.example.matricareog.model.BloodPressure
+import com.example.matricareog.model.HealthReport
+import com.example.matricareog.model.HealthStatus
+import com.example.matricareog.model.PersonalInformation
+import com.example.matricareog.model.PregnancyInfo
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer

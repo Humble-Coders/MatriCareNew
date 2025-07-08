@@ -1,13 +1,11 @@
 package com.example.matricareog.repository
 
 import android.util.Log
-import com.example.matricareog.ChartData
-import com.example.matricareog.HealthDataPoint
-import com.example.matricareog.MedicalHistory
-import com.example.matricareog.PersonalInformation
+import com.example.matricareog.model.ChartData
+import com.example.matricareog.model.HealthDataPoint
+import com.example.matricareog.model.MedicalHistory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await

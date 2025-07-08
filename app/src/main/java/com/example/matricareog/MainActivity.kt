@@ -14,26 +14,27 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.matricare.MaternalGuideScreen
-import com.example.matricareog.graphscreen.MatriCareScreen
-import com.example.matricareog.loginsignupscreen.LoginScreen
-import com.example.matricareog.loginsignupscreen.LoginSignupopt
-import com.example.matricareog.loginsignupscreen.SignUpScreen
-import com.example.matricareog.medicalhistoryscreens.MedicalHistoryScreenOne
-import com.example.matricareog.medicalhistoryscreens.MedicalHistoryScreenTwo
-import com.example.matricareog.reportanalysisscreen.ReportAnalysisScreen
+import com.example.matricareog.screens.GraphReportScreen
+import com.example.matricareog.screens.authScreens.LoginScreen
+import com.example.matricareog.screens.authScreens.LoginSignup
+import com.example.matricareog.screens.authScreens.SignUpScreen
+import com.example.matricareog.screens.inputScreens.InputScreenOne
+import com.example.matricareog.screens.inputScreens.InputScreenTwo
+import com.example.matricareog.screens.ReportAnalysisScreen
 import com.example.matricareog.repository.MatriCareRepository
 import com.example.matricareog.repository.MedicalHistoryRepository
 import com.example.matricareog.repository.ReportRepository
 import com.example.matricareog.repository.UserRepository
-import com.example.matricareog.screens.welcomescreen.GetStarted
-import com.example.matricareog.screens.welcomescreen.WelcomeScreenThree
-import com.example.matricareog.screens.welcomescreen.WelcomeScreenone
-import com.example.matricareog.screens.welcomescreen.WelcomeScreentwo
+import com.example.matricareog.screens.HomeScreen
+import com.example.matricareog.screens.welcomeScreens.GetStarted
+import com.example.matricareog.screens.welcomeScreens.WelcomeScreenThree
+import com.example.matricareog.screens.welcomeScreens.WelcomeScreenOne
+import com.example.matricareog.screens.welcomeScreens.WelcomeScreenTwo
 import com.example.matricareog.ui.theme.MatricareogTheme
 import com.example.matricareog.viewmodels.AuthViewModel
 import com.example.matricareog.viewmodels.MatriCareViewModel
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
-import com.example.matricareog.viewmodels.ReportViewModel
+import com.example.matricareog.viewmodels.ReportAnalysisViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -50,7 +51,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var authViewModel: AuthViewModel
     private lateinit var matriCareViewModel: MatriCareViewModel
     private lateinit var medicalHistoryViewModel: MedicalHistoryViewModel
-    private lateinit var reportAnalysisViewModel: ReportViewModel
+    private lateinit var reportAnalysisViewModel: ReportAnalysisViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
         authViewModel = AuthViewModel(userRepository)
         matriCareViewModel = MatriCareViewModel(matriCareRepository)
         medicalHistoryViewModel = MedicalHistoryViewModel(medicalHistoryRepository)
-        reportAnalysisViewModel = ReportViewModel(reportRepository)
+        reportAnalysisViewModel = ReportAnalysisViewModel(reportRepository)
 
         setContent {
             MatricareogTheme {
@@ -85,14 +86,14 @@ class MainActivity : ComponentActivity() {
                         // Welcome Flow
                         // ----------------------
                         composable(Routes.Welcome1) {
-                            WelcomeScreenone(
+                            WelcomeScreenOne(
                                 onNextClicked = { navController.navigate(Routes.Welcome2) },
                                 onSkipClicked = { navController.navigate(Routes.GetStarted) },
                                 currentPageIndex = 0
                             )
                         }
                         composable(Routes.Welcome2) {
-                            WelcomeScreentwo(
+                            WelcomeScreenTwo(
                                 onNextClicked = { navController.navigate(Routes.Welcome3) },
                                 onSkipClicked = { navController.navigate(Routes.GetStarted) },
                                 currentPageIndex = 1
@@ -116,7 +117,7 @@ class MainActivity : ComponentActivity() {
                         // Authentication Flow
                         // ----------------------
                         composable(Routes.AuthChoice) {
-                            LoginSignupopt(
+                            LoginSignup(
                                 onSignUpClick = { navController.navigate(Routes.Signup) },
                                 onLogInClick = { navController.navigate(Routes.Login) }
                             )
@@ -171,7 +172,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val userId = backStackEntry.arguments?.getString("userId") ?: ""
-                            MedicalHistoryScreenOne(
+                            InputScreenOne(
                                 userId = userId,
                                 navigateBack = { navController.popBackStack() },
                                 navigateToScreenTwo = {
@@ -186,7 +187,7 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.StringType })
                         ) { backStackEntry ->
                             val userId = backStackEntry.arguments?.getString("userId") ?: ""
-                            MedicalHistoryScreenTwo(
+                            InputScreenTwo(
                                 userId = userId,
                                 onBackPressed = { navController.popBackStack()
                                                 },
@@ -218,7 +219,7 @@ class MainActivity : ComponentActivity() {
                         // MatriCare Screen
                         // ----------------------
                         composable(route = Routes.MATRICARE) {
-                            MatriCareScreen(
+                            GraphReportScreen(
                                 onBackClick = { navController.popBackStack() },
                                 viewModel = matriCareViewModel
                             )

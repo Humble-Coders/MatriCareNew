@@ -1,4 +1,4 @@
-package com.example.matricareog.screens.welcomescreen
+package com.example.matricareog.screens.welcomeScreens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,12 +23,11 @@ import androidx.compose.ui.unit.sp
 import com.example.matricareog.R
 
 @Composable
-fun WelcomeScreentwo(
+fun WelcomeScreenThree(
     onSkipClicked: () -> Unit,
     onNextClicked: () -> Unit,
     currentPageIndex: Int
 ) {
-    // Define colors
     val pinkColor = Color(0xFFEF5DA8)
     val lightPinkColor = Color(0xFFFFD6E5)
     val backgroundCircleColor1 = Color(0xFFF0F4FF)
@@ -40,7 +39,7 @@ fun WelcomeScreentwo(
             .background(Color.White)
             .padding(24.dp)
     ) {
-        // Background decorative circles
+        // Decorative background circles
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -49,7 +48,6 @@ fun WelcomeScreentwo(
                 .align(Alignment.TopEnd)
                 .offset(x = 50.dp, y = 350.dp)
         )
-
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -60,11 +58,12 @@ fun WelcomeScreentwo(
         )
 
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween // <-- replaces Spacer for vertical spacing
         ) {
-            // Top Section: Logo, Image, Text
+            // Top Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -87,7 +86,7 @@ fun WelcomeScreentwo(
                 }
 
                 Image(
-                    painter = painterResource(id = R.drawable.welcomescreen02),
+                    painter = painterResource(id = R.drawable.welcomescreen03),
                     contentDescription = "Pregnant woman",
                     modifier = Modifier
                         .size(280.dp)
@@ -113,7 +112,7 @@ fun WelcomeScreentwo(
                 )
             }
 
-            // Bottom Section: Dots + Buttons + Home Indicator
+            // Bottom Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

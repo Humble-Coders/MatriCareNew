@@ -1,4 +1,4 @@
-package com.example.matricareog.loginsignupscreen
+package com.example.matricareog.screens.authScreens
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.viewmodels.AuthViewModel
-import com.example.matricareog.AuthResult
+import com.example.matricareog.model.AuthResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

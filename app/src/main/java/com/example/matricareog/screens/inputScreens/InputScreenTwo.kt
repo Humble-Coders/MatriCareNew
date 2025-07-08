@@ -1,4 +1,4 @@
-package com.example.matricareog.medicalhistoryscreens
+package com.example.matricareog.screens.inputScreens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -21,13 +20,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyHistory
+import com.example.matricareog.model.PregnancyHistory
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MedicalHistoryScreenTwo(
+fun InputScreenTwo(
     userId: String,
     onBackPressed: () -> Unit = {},
     onContinuePressed: () -> Unit = {},
@@ -427,9 +425,6 @@ fun MedicalHistoryScreenTwo(
     }
 }
 
-// =====================================
-// REUSABLE REAL-TIME VALIDATED TEXT FIELD COMPONENT
-// =====================================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

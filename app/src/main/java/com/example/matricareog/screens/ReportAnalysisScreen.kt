@@ -1,4 +1,4 @@
-package com.example.matricareog.reportanalysisscreen
+package com.example.matricareog.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -14,11 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.matricareog.HealthMetric
-import com.example.matricareog.HealthReport
-import com.example.matricareog.HealthStatus
-import com.example.matricareog.MetricStatus
-import com.example.matricareog.viewmodels.ReportViewModel
+import com.example.matricareog.model.HealthMetric
+import com.example.matricareog.model.HealthReport
+import com.example.matricareog.model.HealthStatus
+import com.example.matricareog.model.MetricStatus
+import com.example.matricareog.viewmodels.ReportAnalysisViewModel
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -36,8 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
-import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyHistory
+import com.example.matricareog.model.PersonalInformation
+import com.example.matricareog.model.PregnancyHistory
 import com.example.matricareog.R
 import com.example.matricareog.repository.ReportRepository
 import java.util.Locale
@@ -48,7 +48,7 @@ fun ReportAnalysisScreen(
     userId: String,
     onBackClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    reportViewModel: ReportViewModel,
+    reportViewModel: ReportAnalysisViewModel,
     medicalHistoryViewModel: MedicalHistoryViewModel
 ) {
     val context = LocalContext.current

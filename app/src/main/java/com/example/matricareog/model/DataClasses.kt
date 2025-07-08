@@ -1,4 +1,6 @@
-package com.example.matricareog
+package com.example.matricareog.model
+
+import androidx.compose.ui.graphics.Color
 
 
 data class User(
@@ -89,7 +91,7 @@ data class HealthMetric(
 data class HealthStatus(
     val status: String,
     val description: String,
-    val color: androidx.compose.ui.graphics.Color
+    val color: Color
 )
 
 enum class MetricStatus {

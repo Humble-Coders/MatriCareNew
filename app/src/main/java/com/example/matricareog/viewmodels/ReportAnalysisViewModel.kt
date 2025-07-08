@@ -5,15 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.example.matricareog.HealthReport
+import com.example.matricareog.model.HealthReport
 import com.example.matricareog.repository.ReportRepository
 import kotlinx.coroutines.launch
 import android.util.Log
-import com.example.matricareog.PersonalInformation
-import com.example.matricareog.PregnancyHistory
-import com.example.matricareog.PregnancyInfo
+import com.example.matricareog.model.PersonalInformation
+import com.example.matricareog.model.PregnancyHistory
+import com.example.matricareog.model.PregnancyInfo
 
-class ReportViewModel(
+class ReportAnalysisViewModel(
     private val repository: ReportRepository
 ) : ViewModel() {
 

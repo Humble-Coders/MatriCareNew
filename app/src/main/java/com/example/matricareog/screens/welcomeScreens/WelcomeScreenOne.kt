@@ -1,4 +1,4 @@
-package com.example.matricareog.screens.welcomescreen
+package com.example.matricareog.screens.welcomeScreens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.matricareog.R
 
 @Composable
-fun WelcomeScreenone(
+fun WelcomeScreenOne(
     onSkipClicked: () -> Unit,
     onNextClicked: () -> Unit,
     currentPageIndex: Int
