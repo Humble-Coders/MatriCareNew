@@ -185,6 +185,15 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate(Routes.AuthChoice) {
                                         popUpTo(Routes.Home) { inclusive = true }
                                     }
+                                },
+                                onDietClicked = {
+                                    navController.navigate(Routes.DietPlan)
+                                },
+                                onYogaClicked = {
+                                    navController.navigate(Routes.YogaExercises)
+                                },
+                                onDoClicked = {
+                                    navController.navigate(Routes.DosAndDonts)
                                 }
                             )
                         }
@@ -217,7 +226,9 @@ class MainActivity : ComponentActivity() {
                                 onBackPressed = { navController.popBackStack()
                                                 },
                                 onContinuePressed = {
-                                    navController.navigate(Routes.reportAnalysisRoute(userId))
+                                    navController.navigate(Routes.reportAnalysisRoute(userId)){
+                                        popUpTo(Routes.MedicalHistory1) { inclusive = true }
+                                    }
                                 },
                                 viewModel = medicalHistoryViewModel
                             )

@@ -43,7 +43,10 @@ fun HomeScreen(
     onMaternalGuideClicked: () -> Unit = {},
     onReportHistoryClicked: () -> Unit = {},
     authViewModel: AuthViewModel,
-    onLogoutClicked: () -> Unit
+    onLogoutClicked: () -> Unit,
+    onDietClicked: () -> Unit ,
+    onYogaClicked: () -> Unit  ,
+    onDoClicked: () -> Unit
 )
 {
     val currentUserState = authViewModel.currentUser.collectAsState()
@@ -117,7 +120,14 @@ fun HomeScreen(
                             bgColor = card.bgColor,
                             icon = card.icon,
                             extraActionText = card.extraActionText,
-                            modifier = Modifier.width(cardWidth)
+                            modifier = Modifier.width(cardWidth),
+                            onClick = {
+                                when (card.title) {
+                                    "Diet Plan" -> {onDietClicked} // Handle Diet Plan click
+                                    "Yoga" -> {onYogaClicked} // Handle Yoga click
+                                    "Do's & Don'ts" -> {onDoClicked} // Handle Meditation click
+                                }
+                            }
                         )
                     }
                 }
@@ -139,7 +149,7 @@ fun FeatureCard(
     icon: ImageVector,
     extraActionText: String? = null,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
@@ -201,7 +211,7 @@ private val featureCards = listOf(
 private val horizontalFeatureCards = listOf(
     FeatureCardData("Diet Plan", "Healthy meals for you & baby", Color(0xFFEAF4EC), Icons.Default.Favorite, "View Plan"),
     FeatureCardData("Yoga", "Safe workouts", Color(0xFFE6F0FF), Icons.Default.Face, "Start Now"),
-    FeatureCardData("Meditation", "Relax your mind", Color(0xFFFFF3E0), Icons.Default.Favorite, "Try Now")
+    FeatureCardData("Do's & Don'ts", "Follow these advices", Color(0xFFFFF3E0), Icons.Default.Favorite, "Read More")
 )
 
 @Composable
@@ -284,13 +294,13 @@ fun BottomNavigationBar(
             selected = false,
             onClick = {},
             icon = { MaterialIcon(Icons.Outlined.FavoriteBorder, null, Modifier.size(26.dp)) },
-            label = { MaterialText("Favorites", fontSize = 12.sp) }
+            label = { MaterialText("MomBuddy", fontSize = 12.sp) }
         )
         BottomNavigationItem(
             selected = false,
             onClick = {},
             icon = { MaterialIcon(Icons.Default.Person, null, Modifier.size(26.dp)) },
-            label = { MaterialText("Community", fontSize = 12.sp) }
+            label = { MaterialText("History", fontSize = 12.sp) }
         )
         BottomNavigationItem(
             selected = false,
