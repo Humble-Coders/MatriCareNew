@@ -1,8 +1,5 @@
 package com.example.matricareog.repository
 
-// Required imports for MedicalHistoryRepository
-
-// If you're using the newer Firebase BOM approach, use these imports instead:
 import com.example.matricareog.MedicalHistory
 import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyHistory
@@ -12,8 +9,6 @@ import kotlinx.coroutines.tasks.await
 class MedicalHistoryRepository(
     private val firestore: FirebaseFirestore
 ) {
-
-
 
     suspend fun saveCompleteDataWithMLPredictions(
         userId: String,
@@ -31,6 +26,7 @@ class MedicalHistoryRepository(
                 personalInformation = personalInfo,
                 pregnancyHistory = pregnancyHistory,
                 mlRiskLevel = mlPrediction?.riskLevel,
+                mlPredictionTimestamp = if (mlPrediction != null) timestamp else null
             )
 
             // Save to Firebase using add() for auto-generated ID
@@ -46,8 +42,4 @@ class MedicalHistoryRepository(
             Result.failure(e)
         }
     }
-
-
-
-
 }

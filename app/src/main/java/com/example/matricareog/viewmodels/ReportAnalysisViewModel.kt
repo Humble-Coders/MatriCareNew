@@ -30,6 +30,7 @@ class ReportViewModel(
     val isLoading: LiveData<Boolean> = _isLoading
 
     private val _isModelLoading = MutableLiveData(false)
+    val isModelLoading: LiveData<Boolean> = _isModelLoading
 
     private val _isModelReady = MutableLiveData(false)
     val isModelReady: LiveData<Boolean> = _isModelReady
@@ -38,19 +39,27 @@ class ReportViewModel(
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
+    // Processing state for debugging
+    private val _processingStatus = MutableLiveData<String>()
+    val processingStatus: LiveData<String> = _processingStatus
+
     private val TAG = "ReportViewModel"
 
     // Initialize ML model
     fun initializeMLModel(context: Context) {
         viewModelScope.launch {
             _isModelLoading.value = true
+            _processingStatus.value = "Loading ML model..."
+
             try {
                 repository.initializeModel(context)
                 _isModelReady.value = true
+                _processingStatus.value = "ML model loaded successfully"
                 Log.d(TAG, "ML Model initialized successfully")
             } catch (e: Exception) {
                 _error.value = "Failed to load ML model: ${e.message}"
                 _isModelReady.value = false
+                _processingStatus.value = "Failed to load ML model"
                 Log.e(TAG, "ML Model initialization failed: ${e.message}")
             } finally {
                 _isModelLoading.value = false
@@ -58,7 +67,39 @@ class ReportViewModel(
         }
     }
 
-    // Generate report from LiveData instances (received from MedicalHistoryViewModel)
+    // Validate PersonalInformation data
+    private fun isValidPersonalInfo(personalInfo: PersonalInformation): Boolean {
+        return personalInfo.age > 0 &&
+                personalInfo.systolicBloodPressure > 0 &&
+                personalInfo.diastolicBloodPressure > 0 &&
+                personalInfo.glucose > 0 &&
+                personalInfo.bodyTemperature > 0 &&
+                personalInfo.pulseRate > 0 &&
+                personalInfo.hemoglobinLevel > 0 &&
+                personalInfo.respirationRate > 0
+    }
+
+    // Validate PregnancyHistory data
+    private fun isValidPregnancyHistory(pregnancyHistory: PregnancyHistory): Boolean {
+        return pregnancyHistory.gravida >= 0 &&
+                pregnancyHistory.para >= 0 &&
+                pregnancyHistory.liveBirths >= 0 &&
+                pregnancyHistory.abortions >= 0 &&
+                pregnancyHistory.childDeaths >= 0
+    }
+
+    // Clear error state
+    fun clearError() {
+        _error.value = null
+    }
+
+    // Retry analysis
+    fun retryAnalysis(personalInfo: PersonalInformation, pregnancyHistory: PregnancyHistory, userName: String = "Patient") {
+        clearError()
+        processMLAnalysisFromLiveData(personalInfo, pregnancyHistory, userName)
+    }
+
+
     fun processMLAnalysisFromLiveData(
         personalInfo: PersonalInformation,
         pregnancyHistory: PregnancyHistory,
@@ -67,22 +108,45 @@ class ReportViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _processingStatus.value = "Validating input data..."
 
             try {
-                Log.d(TAG, "Processing ML analysis from LiveData instances")
-                Log.d(TAG, "Personal Info received: $personalInfo")
-                Log.d(TAG, "Pregnancy History received: $pregnancyHistory")
+                // Validate that model is ready
+                if (!repository.isModelReady()) {
+                    throw Exception("AI model is not ready. Please wait for model initialization to complete.")
+                }
 
-                // Create PregnancyInfo from PregnancyHistory
+                // Validate input data
+                if (!isValidPersonalInfo(personalInfo)) {
+                    throw Exception("Invalid personal information. Please check all health parameters are filled correctly.")
+                }
+
+                if (!isValidPregnancyHistory(pregnancyHistory)) {
+                    throw Exception("Invalid pregnancy history. Please verify all obstetric information.")
+                }
+
+                _processingStatus.value = "Converting data for AI analysis..."
+
+                // Create PregnancyInfo from PregnancyHistory (matching research paper exactly)
                 val pregnancyInfo = PregnancyInfo(
-                    numberOfPregnancies = pregnancyHistory.numberOfPregnancies,
-                    numberOfLiveBirths = pregnancyHistory.numberOfLiveBirths,
-                    numberOfAbortions = pregnancyHistory.numberOfAbortions
+                    gravida = pregnancyHistory.gravida,
+                    para = pregnancyHistory.para,
+                    liveBirths = pregnancyHistory.liveBirths,
+                    abortions = pregnancyHistory.abortions,
+                    childDeaths = pregnancyHistory.childDeaths
                 )
 
-                // Generate ML prediction
+                _processingStatus.value = "Running AI risk assessment..."
+
+                // Generate ML prediction - this is the ONLY source of risk assessment
                 val mlPrediction = repository.generateMLPrediction(personalInfo, pregnancyInfo)
+
+                if (mlPrediction == null) {
+                    throw Exception("AI model failed to generate prediction. Please check your data and try again.")
+                }
+
                 _mlPrediction.value = mlPrediction
+                _processingStatus.value = "Generating comprehensive health report..."
 
                 // Generate health report
                 val healthReport = repository.generateHealthReportFromData(
@@ -93,18 +157,19 @@ class ReportViewModel(
                 )
                 _generatedHealthReport.value = healthReport
 
-                Log.d(TAG, "ML Analysis completed successfully")
-                Log.d(TAG, "ML Prediction: $mlPrediction")
-                Log.d(TAG, "Health Report generated for: $userName")
+                _processingStatus.value = "✅ AI analysis completed successfully"
+                Log.d(TAG, "✅ Pure ML Analysis completed - Risk: ${mlPrediction.riskLevel}")
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error processing ML analysis: ${e.message}")
-                _error.value = "Error processing ML analysis: ${e.message}"
+                Log.e(TAG, "❌ ML Analysis failed: ${e.message}")
+                _error.value = "AI Analysis Failed: ${e.message}"
+                _processingStatus.value = "❌ Analysis failed"
+                _mlPrediction.value = null
+                _generatedHealthReport.value = null
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
 
 }

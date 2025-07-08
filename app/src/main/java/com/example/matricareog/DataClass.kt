@@ -1,8 +1,5 @@
 package com.example.matricareog
 
-import androidx.compose.ui.graphics.vector.ImageVector
-
-
 
 data class User(
     val fullName: String = "",
@@ -17,45 +14,27 @@ sealed class AuthResult {
     object Idle : AuthResult()
 }
 
-data class PregnancyInfo(
-    val numberOfPregnancies: Int,
-    val numberOfLiveBirths: Int,
-    val numberOfAbortions: Int
-) {
-    // Helper function for prediction input
-    fun toPredictionInput(): List<Float> = listOf(
-        numberOfPregnancies.toFloat(),
-        numberOfLiveBirths.toFloat(),
-        numberOfAbortions.toFloat()
-    )
-}
-
-
+// Updated PersonalInformation based on research paper Table 2
 data class PersonalInformation(
     val age: Int = 0,
     val systolicBloodPressure: Int = 0,
     val diastolicBloodPressure: Int = 0,
     val glucose: Double = 0.0,
-    val hba1c: Double = 0.0,
-    val respirationRate: Int = 0,
     val bodyTemperature: Double = 0.0,
     val pulseRate: Int = 0,
     val hemoglobinLevel: Double = 0.0,
-    val lifestyle: Int = 1, // 0=Sedentary, 1=Active, 2=VeryActive
-    val alcoholConsumption: Boolean = false,
-    val hasDiabetes: Boolean = false,
+    val hba1c: Double = 0.0,          // Add this field
+    val respirationRate: Int = 0
 )
 
+// Updated PregnancyHistory based on research paper Table 2
 data class PregnancyHistory(
-    val numberOfPregnancies: Int = 0,
-    val numberOfLiveBirths: Int = 0,
-    val numberOfAbortions: Int = 0,
-    val numberOfChildDeaths: Int = 0,
-    val numberOfDeliveries: Int = 0,
-    val lastDeliveryDate: String = "" // Format: "dd/MM/yyyy"
+    val gravida: Int = 0,           // G - Feature 2 (total pregnancies including current)
+    val para: Int = 0,              // P - Feature 3 (deliveries after 20 weeks)
+    val liveBirths: Int = 0,        // L - Feature 4 (total living children)
+    val abortions: Int = 0,         // A - Feature 5 (termination of pregnancies)
+    val childDeaths: Int = 0        // D - Feature 6 (number of children dead)
 )
-
-
 
 data class MedicalHistory(
     val id: String = "",
@@ -64,11 +43,11 @@ data class MedicalHistory(
     val pregnancyHistory: PregnancyHistory = PregnancyHistory(),
 
     // Timestamps
-    val createdAt: Long = System.currentTimeMillis(),   // explicitly for creation
-    val updatedAt: Long = System.currentTimeMillis(),   // explicitly for last update
-    val timestamp: Long = System.currentTimeMillis(),   // still keep generic timestamp if needed
-   
-    val date: Long = System.currentTimeMillis(), //
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val timestamp: Long = System.currentTimeMillis(),
+    val date: Long = System.currentTimeMillis(),
+
     // ML prediction fields
     val mlRiskLevel: String? = null,
     val mlPredictionTimestamp: Long? = null,
@@ -77,11 +56,7 @@ data class MedicalHistory(
     val version: Int = 1
 )
 
-
-
-
-
-// Data Classes
+// Keep existing classes that don't need changes
 data class HealthReport(
     val patientName: String,
     val date: String,
@@ -104,7 +79,7 @@ data class HealthMetric(
     val value: String,
     val unit: String,
     val normalRange: String,
-    val currentValue: Float, // 0-100 for progress calculation
+    val currentValue: Float,
     val rangeMin: Float,
     val rangeMax: Float,
     val icon: Int,
@@ -122,7 +97,7 @@ enum class MetricStatus {
 }
 
 data class HealthDataPoint(
-    val date: String = "", // Format: "dd/MM"
+    val date: String = "",
     val timestamp: Long = 0L,
     val hemoglobin: Double = 0.0,
     val hba1c: Double = 0.0
@@ -147,3 +122,31 @@ data class ChartRange(
     val unit: String,
     val label: String
 )
+
+data class PregnancyInfo(
+    val gravida: Int,      // G
+    val para: Int,         // P
+    val liveBirths: Int,   // L
+    val abortions: Int,    // A
+    val childDeaths: Int   // D
+) {
+    // Helper function for prediction input (13 features total)
+    // Features in exact order from research paper Table 2
+    fun toPredictionInput(personalInfo: PersonalInformation): FloatArray {
+        return floatArrayOf(
+            personalInfo.age.toFloat(),                    // Feature 1: Age
+            gravida.toFloat(),                            // Feature 2: G (Gravida)
+            para.toFloat(),                               // Feature 3: P (Para)
+            liveBirths.toFloat(),                         // Feature 4: L (Live births)
+            abortions.toFloat(),                          // Feature 5: A (Abortions)
+            childDeaths.toFloat(),                        // Feature 6: D (Deaths)
+            personalInfo.systolicBloodPressure.toFloat(), // Feature 7: SBP (Systolic BP)
+            personalInfo.diastolicBloodPressure.toFloat(),// Feature 8: DSP (Diastolic BP)
+            personalInfo.glucose.toFloat(),               // Feature 9: RBS (Random Blood Sugar)
+            personalInfo.bodyTemperature.toFloat(),       // Feature 10: BT (Body Temperature)
+            personalInfo.pulseRate.toFloat(),             // Feature 11: HR (Heart Rate)
+            personalInfo.hemoglobinLevel.toFloat(),       // Feature 12: Hb (Hemoglobin)
+            personalInfo.respirationRate.toFloat()        // Feature 13: RR (Respiration Rate)
+        )
+    }
+}

@@ -7,7 +7,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -19,41 +21,134 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-
 fun MedicalHistoryScreenTwo(
     userId: String,
     onBackPressed: () -> Unit = {},
     onContinuePressed: () -> Unit = {},
-    viewModel: MedicalHistoryViewModel // Remove = viewModel()
-
+    viewModel: MedicalHistoryViewModel
 ) {
     val personalInfo by viewModel.personalInfo.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(false)
     val pinkColor = Color(0xFFEF5DA8)
 
-    // Observe ViewModel state
-    val isLoading by viewModel.isLoading.observeAsState(false)
-    val error by viewModel.error.observeAsState()
+    // Form states with real-time validation
+    var gravida by remember { mutableStateOf("") }
+    var gravidaError by remember { mutableStateOf<String?>(null) }
 
-    // Simple float/int/string mutable states for form inputs
-    var numberOfPregnancies by remember { mutableFloatStateOf(0f) }
-    var numberOfLiveBirths by remember { mutableFloatStateOf(0f) }
-    var numberOfAbortions by remember { mutableFloatStateOf(0f) }
-    var numberOfChildDeaths by remember { mutableFloatStateOf(0f) }
-    var numberOfDeliveries by remember { mutableFloatStateOf(0f) }
-    var lastDeliveryDate by remember { mutableStateOf("") }
+    var para by remember { mutableStateOf("") }
+    var paraError by remember { mutableStateOf<String?>(null) }
 
-    // Show error message if any
-    error?.let { errorMessage ->
-        LaunchedEffect(errorMessage) {
-            println("Error: $errorMessage")
+    var liveBirths by remember { mutableStateOf("") }
+    var liveBirthsError by remember { mutableStateOf<String?>(null) }
+
+    var abortions by remember { mutableStateOf("") }
+    var abortionsError by remember { mutableStateOf<String?>(null) }
+
+    var childDeaths by remember { mutableStateOf("") }
+    var childDeathsError by remember { mutableStateOf<String?>(null) }
+
+    // Relationship validation errors
+    var relationshipError by remember { mutableStateOf<String?>(null) }
+
+    // Real-time validation functions
+    fun validateGravida(value: String): String? {
+        val intValue = value.toIntOrNull()
+        return when {
+            value.isEmpty() -> null
+            intValue == null -> "Please enter a valid number"
+            intValue < 0 -> "Cannot be negative"
+            intValue > 20 -> "Too high (maximum: 20)"
+            else -> null
         }
+    }
+
+    fun validatePara(value: String): String? {
+        val intValue = value.toIntOrNull()
+        return when {
+            value.isEmpty() -> null
+            intValue == null -> "Please enter a valid number"
+            intValue < 0 -> "Cannot be negative"
+            intValue > 15 -> "Too high (maximum: 15)"
+            else -> null
+        }
+    }
+
+    fun validateLiveBirths(value: String): String? {
+        val intValue = value.toIntOrNull()
+        return when {
+            value.isEmpty() -> null
+            intValue == null -> "Please enter a valid number"
+            intValue < 0 -> "Cannot be negative"
+            intValue > 15 -> "Too high (maximum: 15)"
+            else -> null
+        }
+    }
+
+    fun validateAbortions(value: String): String? {
+        val intValue = value.toIntOrNull()
+        return when {
+            value.isEmpty() -> null
+            intValue == null -> "Please enter a valid number"
+            intValue < 0 -> "Cannot be negative"
+            intValue > 10 -> "Too high (maximum: 10)"
+            else -> null
+        }
+    }
+
+    fun validateChildDeaths(value: String): String? {
+        val intValue = value.toIntOrNull()
+        return when {
+            value.isEmpty() -> null
+            intValue == null -> "Please enter a valid number"
+            intValue < 0 -> "Cannot be negative"
+            intValue > 10 -> "Too high (maximum: 10)"
+            else -> null
+        }
+    }
+
+    fun validateRelationships(g: String, p: String, l: String, a: String, d: String): String? {
+        val gVal = g.toIntOrNull()
+        val pVal = p.toIntOrNull()
+        val lVal = l.toIntOrNull()
+        val aVal = a.toIntOrNull()
+        val dVal = d.toIntOrNull()
+
+        if (gVal != null && pVal != null && aVal != null) {
+            if ((pVal + aVal) > gVal) {
+                return "Para + Abortions cannot exceed Gravida"
+            }
+        }
+
+        if (lVal != null && pVal != null && lVal > pVal) {
+            return "Live births cannot exceed Para"
+        }
+
+        if (dVal != null && lVal != null && dVal > lVal) {
+            return "Child deaths cannot exceed live births"
+        }
+
+        return null
+    }
+
+    // Update relationship validation whenever any field changes
+    LaunchedEffect(gravida, para, liveBirths, abortions, childDeaths) {
+        relationshipError = validateRelationships(gravida, para, liveBirths, abortions, childDeaths)
+    }
+
+    // Check if all fields are valid
+    val allFieldsValid = remember(gravida, para, liveBirths, abortions, childDeaths,
+        gravidaError, paraError, liveBirthsError, abortionsError,
+        childDeathsError, relationshipError) {
+        gravida.isNotEmpty() && para.isNotEmpty() && liveBirths.isNotEmpty() &&
+                abortions.isNotEmpty() && childDeaths.isNotEmpty() &&
+                gravidaError == null && paraError == null && liveBirthsError == null &&
+                abortionsError == null && childDeathsError == null && relationshipError == null
     }
 
     Scaffold(
@@ -61,7 +156,7 @@ fun MedicalHistoryScreenTwo(
             TopAppBar(
                 title = {
                     Text(
-                        "Medical History",
+                        "Pregnancy History",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
@@ -120,157 +215,175 @@ fun MedicalHistoryScreenTwo(
                 ) {
                     item {
                         Text(
-                            text = "Enter Values For Your Report",
+                            text = "Enter Your Pregnancy History",
                             color = pinkColor,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
 
                         Text(
-                            text = "Please provide accurate information for your medical record",
+                            text = "Real-time validation with relationship checks",
                             color = Color.Gray,
                             fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                         )
 
-                        Text(
-                            text = "PREGNANCY HISTORY",
-                            color = Color.Black,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                    }
-
-                    // Form fields with optimized state management
-                    item {
-                        OutlinedTextField(
-                            value = if (numberOfPregnancies == 0f) "" else numberOfPregnancies.toInt().toString(),
-                            onValueChange = { newValue ->
-                                numberOfPregnancies = newValue.toFloatOrNull() ?: 0f
-                            },
-                            label = { Text("Number of Pregnancies") },
-                            placeholder = { Text("Enter number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
-                        )
-                    }
-
-                    item {
-                        OutlinedTextField(
-                            value = if (numberOfLiveBirths == 0f) "" else numberOfLiveBirths.toInt().toString(),
-                            onValueChange = { newValue ->
-                                numberOfLiveBirths = newValue.toFloatOrNull() ?: 0f
-                            },
-                            label = { Text("Number of Live Births") },
-                            placeholder = { Text("Enter number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
-                        )
-                    }
-
-                    item {
-                        OutlinedTextField(
-                            value = if (numberOfAbortions == 0f) "" else numberOfAbortions.toInt().toString(),
-                            onValueChange = { newValue ->
-                                numberOfAbortions = newValue.toFloatOrNull() ?: 0f
-                            },
-                            label = { Text("Number of Abortions") },
-                            placeholder = { Text("Enter number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
-                        )
-                    }
-
-                    item {
-                        OutlinedTextField(
-                            value = if (numberOfChildDeaths == 0f) "" else numberOfChildDeaths.toInt().toString(),
-                            onValueChange = { newValue ->
-                                numberOfChildDeaths = newValue.toFloatOrNull() ?: 0f
-                            },
-                            label = { Text("Number of Child Deaths") },
-                            placeholder = { Text("Enter number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
-                        )
-                    }
-
-                    item {
-                        OutlinedTextField(
-                            value = if (numberOfDeliveries == 0f) "" else numberOfDeliveries.toInt().toString(),
-                            onValueChange = { newValue ->
-                                numberOfDeliveries = newValue.toFloatOrNull() ?: 0f
-                            },
-                            label = { Text("Number of Deliveries") },
-                            placeholder = { Text("Enter number") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
-                        )
-                    }
-
-                    item {
-                        OutlinedTextField(
-                            value = lastDeliveryDate,
-                            onValueChange = { newValue ->
-                                lastDeliveryDate = newValue
-                            },
-                            label = { Text("Last Delivery Date") },
-                            placeholder = { Text("Enter date (e.g., DD/MM/YYYY)") },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarToday,
-                                    contentDescription = "Select Date",
-                                    tint = pinkColor
+                        // Medical definitions card
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp)
+                            ) {
+                                Text(
+                                    text = "Medical Definitions:",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Gray
                                 )
+                                Text(
+                                    text = "• Gravida (G): Total pregnancies including current\n" +
+                                            "• Para (P): Deliveries after 20 weeks gestation\n" +
+                                            "• Live Births (L): Total living children\n" +
+                                            "• Abortions (A): Pregnancy terminations\n" +
+                                            "• Deaths (D): Number of children who died",
+                                    fontSize = 11.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Show relationship error if exists
+                    if (relationshipError != null) {
+                        item {
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "⚠️ $relationshipError",
+                                    color = Color.Red,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Gravida Field
+                    item {
+                        RealTimeValidatedTextField(
+                            value = gravida,
+                            onValueChange = {
+                                gravida = it
+                                gravidaError = validateGravida(it)
                             },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = pinkColor,
-                                focusedLabelColor = pinkColor
-                            ),
-                            singleLine = true
+                            label = "Gravida (G)",
+                            placeholder = "Total pregnancies (0-20)",
+                            keyboardType = KeyboardType.Number,
+                            isError = gravidaError != null,
+                            errorMessage = gravidaError,
+                            helperText = "Range: 0-20",
+                            pinkColor = pinkColor,
+                            allowZero = true
                         )
                     }
 
-                    // Button and bottom spacing
+                    // Para Field
                     item {
-                        // Save and Continue button
+                        RealTimeValidatedTextField(
+                            value = para,
+                            onValueChange = {
+                                para = it
+                                paraError = validatePara(it)
+                            },
+                            label = "Para (P)",
+                            placeholder = "Deliveries after 20 weeks (0-15)",
+                            keyboardType = KeyboardType.Number,
+                            isError = paraError != null,
+                            errorMessage = paraError,
+                            helperText = "Range: 0-15",
+                            pinkColor = pinkColor,
+                            allowZero = true
+                        )
+                    }
+
+                    // Live Births Field
+                    item {
+                        RealTimeValidatedTextField(
+                            value = liveBirths,
+                            onValueChange = {
+                                liveBirths = it
+                                liveBirthsError = validateLiveBirths(it)
+                            },
+                            label = "Live Births (L)",
+                            placeholder = "Living children (0-15)",
+                            keyboardType = KeyboardType.Number,
+                            isError = liveBirthsError != null,
+                            errorMessage = liveBirthsError,
+                            helperText = "Range: 0-15",
+                            pinkColor = pinkColor,
+                            allowZero = true
+                        )
+                    }
+
+                    // Abortions Field
+                    item {
+                        RealTimeValidatedTextField(
+                            value = abortions,
+                            onValueChange = {
+                                abortions = it
+                                abortionsError = validateAbortions(it)
+                            },
+                            label = "Abortions (A)",
+                            placeholder = "Pregnancy terminations (0-10)",
+                            keyboardType = KeyboardType.Number,
+                            isError = abortionsError != null,
+                            errorMessage = abortionsError,
+                            helperText = "Range: 0-10",
+                            pinkColor = pinkColor,
+                            allowZero = true
+                        )
+                    }
+
+                    // Child Deaths Field
+                    item {
+                        RealTimeValidatedTextField(
+                            value = childDeaths,
+                            onValueChange = {
+                                childDeaths = it
+                                childDeathsError = validateChildDeaths(it)
+                            },
+                            label = "Child Deaths (D)",
+                            placeholder = "Children who died (0-10)",
+                            keyboardType = KeyboardType.Number,
+                            isError = childDeathsError != null,
+                            errorMessage = childDeathsError,
+                            helperText = "Range: 0-10",
+                            pinkColor = pinkColor,
+                            allowZero = true
+                        )
+                    }
+
+                    // Save & Continue Button
+                    item {
                         Button(
                             onClick = {
-                                // Create PregnancyHistory object from form inputs
                                 val pregnancyHistoryObject = PregnancyHistory(
-                                    numberOfPregnancies = numberOfPregnancies.toInt(),
-                                    numberOfLiveBirths = numberOfLiveBirths.toInt(),
-                                    numberOfAbortions = numberOfAbortions.toInt(),
-                                    numberOfChildDeaths = numberOfChildDeaths.toInt(),
-                                    numberOfDeliveries = numberOfDeliveries.toInt(),
-                                    lastDeliveryDate = if (lastDeliveryDate.isBlank()) "N/A" else lastDeliveryDate
+                                    gravida = gravida.toInt(),
+                                    para = para.toInt(),
+                                    liveBirths = liveBirths.toInt(),
+                                    abortions = abortions.toInt(),
+                                    childDeaths = childDeaths.toInt()
                                 )
+
                                 viewModel.updatePregnancyHistory(pregnancyHistoryObject)
 
                                 if (personalInfo != null) {
@@ -280,30 +393,16 @@ fun MedicalHistoryScreenTwo(
                                     )
                                     onContinuePressed()
                                 }
-                                else {
-                                    println("Personal Info not available yet!")
-                                }
-
-
-
-                                println("Save & Continue button clicked")
-                                println("Current pregnancyHistory: $pregnancyHistoryObject")
-
-                                // Trigger saving to Firebase
-
-
-                                // Navigate or do next
-
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
                                 .padding(vertical = 8.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = pinkColor
+                                containerColor = if (allFieldsValid) pinkColor else Color.Gray
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            enabled = !isLoading
+                            enabled = allFieldsValid && !isLoading && personalInfo != null
                         ) {
                             if (isLoading) {
                                 CircularProgressIndicator(
@@ -313,51 +412,119 @@ fun MedicalHistoryScreenTwo(
                                 )
                             } else {
                                 Text(
-                                    "Save & Continue",
+                                    "Continue to Risk Analysis",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
                         }
 
-                        // Home indicator line
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 16.dp, bottom = 8.dp)
-                                .size(width = 40.dp, height = 4.dp)
-                                .background(Color.Black, RoundedCornerShape(2.dp))
-                                .align(Alignment.CenterHorizontally)
-                        )
-
-                        // Add extra space at the bottom
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
+        }
+    }
+}
 
-            // Loading overlay
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Card(
-                        modifier = Modifier.padding(32.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(color = pinkColor)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Saving your information...")
+// =====================================
+// REUSABLE REAL-TIME VALIDATED TEXT FIELD COMPONENT
+// =====================================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RealTimeValidatedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    isError: Boolean = false,
+    errorMessage: String? = null,
+    helperText: String? = null,
+    pinkColor: Color,
+    allowZero: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = when {
+                    isError -> Color.Red
+                    value.isNotEmpty() && !isError -> Color.Green
+                    else -> Color.LightGray
+                },
+                focusedBorderColor = when {
+                    isError -> Color.Red
+                    value.isNotEmpty() && !isError -> Color.Green
+                    else -> pinkColor
+                },
+                focusedLabelColor = when {
+                    isError -> Color.Red
+                    value.isNotEmpty() && !isError -> Color.Green
+                    else -> pinkColor
+                },
+                errorBorderColor = Color.Red,
+                errorLabelColor = Color.Red
+            ),
+            singleLine = true,
+            isError = isError,
+            trailingIcon = {
+                when {
+                    isError -> {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    value.isNotEmpty() && !isError -> {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Valid",
+                            tint = Color.Green,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    else -> {
+                        IconButton(onClick = { /* Could show info dialog */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Info",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
             }
+        )
+
+        // Error message
+        if (isError && errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        // Helper text (only show when no error)
+        if (!isError && helperText != null) {
+            Text(
+                text = helperText,
+                color = if (value.isNotEmpty()) Color.Green else Color.Gray,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
         }
     }
 }

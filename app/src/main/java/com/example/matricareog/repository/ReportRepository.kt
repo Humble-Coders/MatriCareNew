@@ -1,16 +1,14 @@
+
 package com.example.matricareog.repository
 
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
 import com.example.matricareog.BloodPressure
-import com.example.matricareog.HealthMetric
 import com.example.matricareog.HealthReport
 import com.example.matricareog.HealthStatus
-import com.example.matricareog.MetricStatus
 import com.example.matricareog.PersonalInformation
 import com.example.matricareog.PregnancyInfo
-import com.example.matricareog.R
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.MappedByteBuffer
@@ -19,11 +17,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class ReportRepository(
-) {
+class ReportRepository {
 
     private val TAG = "ReportRepository"
-
     private var tfliteInterpreter: Interpreter? = null
     private var isModelLoaded = false
 
@@ -32,10 +28,11 @@ class ReportRepository(
             val modelBuffer = loadModelFile(context, "medical_risk_model.tflite")
             tfliteInterpreter = Interpreter(modelBuffer)
             isModelLoaded = true
-            Log.d(TAG, "TFLite model loaded successfully")
+            Log.d(TAG, "✅ Model loaded successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Error loading TFLite model: ${e.message}")
+            Log.e(TAG, "❌ Error loading TFLite model: ${e.message}", e)
             isModelLoaded = false
+            throw e
         }
     }
 
@@ -48,124 +45,79 @@ class ReportRepository(
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
     }
 
-    // ML Model Prediction
     data class RiskPrediction(
-        val riskLevel: String
+        val riskLevel: String,
+        val confidence: Float = 0f,
+        val noRiskProb: Float = 0f,
+        val highRiskProb: Float = 0f
     )
 
-    private fun predictRisk(personalInfo: PersonalInformation, pregnancyInfo: PregnancyInfo?): RiskPrediction? {
-        return try {
-            if (!isModelLoaded || tfliteInterpreter == null) {
-                Log.w(TAG, "Model not loaded, skipping prediction")
-                return null
-            }
+    private fun predictRisk(personalInfo: PersonalInformation, pregnancyInfo: PregnancyInfo): RiskPrediction? {
+        if (!isModelLoaded || tfliteInterpreter == null) {
+            Log.e(TAG, "❌ Model not loaded")
+            return null
+        }
 
-            val inputData = floatArrayOf(
-                personalInfo.age.toFloat(),
-                pregnancyInfo?.numberOfPregnancies?.toFloat() ?: 0f,
-                pregnancyInfo?.numberOfLiveBirths?.toFloat() ?: 0f,
-                personalInfo.lifestyle.toFloat(),
-                if (personalInfo.alcoholConsumption) 1f else 0f,
-                if (personalInfo.hasDiabetes) 1f else 0f,
-                personalInfo.systolicBloodPressure.toFloat(),
-                personalInfo.diastolicBloodPressure.toFloat(),
-                personalInfo.glucose.toFloat(),
-                personalInfo.bodyTemperature.toFloat(),
-                personalInfo.pulseRate.toFloat(),
-                personalInfo.hemoglobinLevel.toFloat(),
-                personalInfo.hba1c.toFloat(),
-                personalInfo.respirationRate.toFloat()
+        try {
+            // Exact 14 features in Python model order
+            val inputFeatures = floatArrayOf(
+                personalInfo.age.toFloat(),                    // 1. Age
+                pregnancyInfo.gravida.toFloat(),              // 2. G
+                pregnancyInfo.para.toFloat(),                 // 3. P
+                pregnancyInfo.liveBirths.toFloat(),           // 4. L
+                pregnancyInfo.abortions.toFloat(),            // 5. A
+                pregnancyInfo.childDeaths.toFloat(),          // 6. D
+                personalInfo.systolicBloodPressure.toFloat(), // 7. SystolicBP
+                personalInfo.diastolicBloodPressure.toFloat(),// 8. DiastolicBP
+                personalInfo.glucose.toFloat(),               // 9. RBS
+                personalInfo.bodyTemperature.toFloat(),       // 10. BodyTemp
+                personalInfo.pulseRate.toFloat(),             // 11. HeartRate
+                personalInfo.hemoglobinLevel.toFloat(),       // 12. HB
+                personalInfo.hba1c.toFloat(),                 // 13. HBA1C (user input)
+                personalInfo.respirationRate.toFloat()        // 14. RR
             )
 
-            val input = Array(1) { inputData }
+            Log.d(TAG, "🧠 ML Input (14 features): ${inputFeatures.contentToString()}")
+
+            val input = Array(1) { inputFeatures }
             val output = Array(1) { FloatArray(2) }
 
             tfliteInterpreter!!.run(input, output)
+
             val probabilities = output[0]
-            val highRiskProbability = probabilities[1]
+            val noRiskProb = probabilities[0]
+            val highRiskProb = probabilities[1]
 
-            val riskLevel = when {
-                highRiskProbability > 0.7f -> "High Risk"
-                highRiskProbability > 0.4f -> "Moderate Risk"
-                else -> "Low Risk"
+            Log.d(TAG, "📊 Raw model output: [No Risk: $noRiskProb, High Risk: $highRiskProb]")
+
+            // CORRECTED PREDICTION LOGIC - matching your Python code
+            val prediction = when {
+                // If model outputs class directly (0 or 1)
+                noRiskProb == 0.0f && highRiskProb == 1.0f -> "High Risk"
+                noRiskProb == 1.0f && highRiskProb == 0.0f -> "No Risk"
+
+                // If model outputs probabilities, use the higher one
+                highRiskProb > noRiskProb -> "High Risk"
+                noRiskProb > highRiskProb -> "No Risk"
+
+                // If equal probabilities, default to No Risk
+                else -> "No Risk"
             }
 
-            RiskPrediction(riskLevel = riskLevel)
+            val confidence = maxOf(noRiskProb, highRiskProb)
+
+            Log.d(TAG, "🎯 Final Prediction: $prediction (confidence: ${(confidence * 100).toInt()}%)")
+
+            return RiskPrediction(
+                riskLevel = prediction,
+                confidence = confidence,
+                noRiskProb = noRiskProb,
+                highRiskProb = highRiskProb
+            )
+
         } catch (e: Exception) {
-            Log.e(TAG, "Error during prediction: ${e.message}")
-            null
-        }
-    }
-
-
-    private fun convertToHealthReport(
-        personalInfo: PersonalInformation,
-        userName: String,
-        pregnancyInfo: PregnancyInfo,
-        riskPrediction: RiskPrediction?
-    ): HealthReport {
-        val date = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())
-
-        val metrics = listOf(
-            createHealthMetric("1", "Systolic Blood Pressure", personalInfo.systolicBloodPressure.toString(),
-                "mmHg", "95-160", personalInfo.systolicBloodPressure.toFloat(), 95f, 160f, R.drawable.sbp),
-            createHealthMetric("2", "Diastolic Blood Pressure", personalInfo.diastolicBloodPressure.toString(),
-                "mmHg", "60-100", personalInfo.diastolicBloodPressure.toFloat(), 60f, 100f, R.drawable.sbp),
-            createHealthMetric("3", "Pulse Rate", personalInfo.pulseRate.toString(),
-                "BPM", "60-100", personalInfo.pulseRate.toFloat(), 60f, 100f, R.drawable.bp),
-            createHealthMetric("4", "Body Temperature", "%.1f".format(personalInfo.bodyTemperature),
-                "°F", "97.0-99.0", personalInfo.bodyTemperature.toFloat(), 97f, 99f, R.drawable.thermometer)
-        )
-
-        val overallStatus = determineOverallStatus(metrics, riskPrediction)
-
-        return HealthReport(
-            patientName = userName,
-            date = date,
-            heartRate = personalInfo.pulseRate,
-            bloodPressure = BloodPressure(
-                systolic = personalInfo.systolicBloodPressure,
-                diastolic = personalInfo.diastolicBloodPressure
-            ),
-            temperature = personalInfo.bodyTemperature,
-            detailedMetrics = metrics,
-            overallStatus = overallStatus,
-            pregnancyInfo = pregnancyInfo
-        )
-    }
-
-    private fun createHealthMetric(
-        id: String, title: String, value: String, unit: String, normalRange: String,
-        currentValue: Float, rangeMin: Float, rangeMax: Float, icon: Int
-    ): HealthMetric {
-        val status = when {
-            currentValue < rangeMin * 0.9f || currentValue > rangeMax * 1.1f -> MetricStatus.CRITICAL
-            currentValue < rangeMin * 0.95f || currentValue > rangeMax * 1.05f -> MetricStatus.WARNING
-            else -> MetricStatus.NORMAL
-        }
-        return HealthMetric(id, title, value, unit, normalRange, currentValue, rangeMin, rangeMax, icon, status)
-    }
-
-    private fun determineOverallStatus(
-        metrics: List<HealthMetric>,
-        riskPrediction: RiskPrediction?
-    ): HealthStatus {
-        riskPrediction?.let {
-            return when (it.riskLevel) {
-                "High Risk" -> HealthStatus("High Risk Pregnancy",
-                    "ML Analysis indicates high risk - Immediate medical attention recommended", Color(0xFFF44336))
-                "Moderate Risk" -> HealthStatus("Moderate Risk Pregnancy",
-                    "ML Analysis suggests moderate risk - Regular monitoring recommended", Color(0xFFFF9800))
-                else -> HealthStatus("Low Risk Pregnancy",
-                    "ML Analysis indicates low risk - Continue regular care", Color(0xFF4CAF50))
-            }
-        }
-        return when {
-            metrics.any { it.status == MetricStatus.CRITICAL } ->
-                HealthStatus("Critical Health Status", "Some metrics are in critical range", Color(0xFFF44336))
-            metrics.any { it.status == MetricStatus.WARNING } ->
-                HealthStatus("Warning Health Status", "Some metrics are outside normal range", Color(0xFFFF9800))
-            else -> HealthStatus("Excellent Health Status", "All metrics are within normal range", Color(0xFF4CAF50))
+            Log.e(TAG, "💥 Prediction error: ${e.message}")
+            return null
         }
     }
 
@@ -179,8 +131,29 @@ class ReportRepository(
         pregnancyInfo: PregnancyInfo,
         riskPrediction: RiskPrediction?
     ): HealthReport {
-        return convertToHealthReport(personalInfo, userName, pregnancyInfo, riskPrediction)
+        val date = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())
+
+        val overallStatus = riskPrediction?.let { prediction ->
+            val description = if (prediction.riskLevel == "High Risk") {
+                "🤖 AI indicates HIGH RISK - Seek immediate medical attention"
+            } else {
+                "🤖 AI indicates NO RISK - Continue regular care"
+            }
+            val color = if (prediction.riskLevel == "High Risk") Color(0xFFF44336) else Color(0xFF4CAF50)
+            HealthStatus("AI: ${prediction.riskLevel}", description, color)
+        } ?: HealthStatus("AI Unavailable", "Model failed to process data", Color(0xFF757575))
+
+        return HealthReport(
+            patientName = userName,
+            date = date,
+            heartRate = personalInfo.pulseRate,
+            bloodPressure = BloodPressure(personalInfo.systolicBloodPressure, personalInfo.diastolicBloodPressure),
+            temperature = personalInfo.bodyTemperature,
+            detailedMetrics = emptyList(),
+            overallStatus = overallStatus,
+            pregnancyInfo = pregnancyInfo
+        )
     }
 
-
+    fun isModelReady(): Boolean = isModelLoaded
 }

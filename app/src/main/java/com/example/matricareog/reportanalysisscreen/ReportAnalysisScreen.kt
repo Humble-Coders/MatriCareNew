@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.matricareog.HealthMetric
@@ -21,7 +20,6 @@ import com.example.matricareog.HealthStatus
 import com.example.matricareog.MetricStatus
 import com.example.matricareog.viewmodels.ReportViewModel
 import com.example.matricareog.viewmodels.MedicalHistoryViewModel
-
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,6 +37,7 @@ import androidx.compose.ui.unit.times
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalContext
 import com.example.matricareog.PersonalInformation
+import com.example.matricareog.PregnancyHistory
 import com.example.matricareog.R
 import com.example.matricareog.repository.ReportRepository
 import java.util.Locale
@@ -49,7 +48,7 @@ fun ReportAnalysisScreen(
     userId: String,
     onBackClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    reportViewModel: ReportViewModel ,
+    reportViewModel: ReportViewModel,
     medicalHistoryViewModel: MedicalHistoryViewModel
 ) {
     val context = LocalContext.current
@@ -57,47 +56,59 @@ fun ReportAnalysisScreen(
     // Data from ReportViewModel
     val mlPrediction by reportViewModel.mlPrediction.observeAsState()
     val isLoading by reportViewModel.isLoading.observeAsState(false)
+    val isModelLoading by reportViewModel.isModelLoading.observeAsState(false)
     val error by reportViewModel.error.observeAsState()
     val isModelReady by reportViewModel.isModelReady.observeAsState(false)
-
+    val processingStatus by reportViewModel.processingStatus.observeAsState("")
     val generatedReport by reportViewModel.generatedHealthReport.observeAsState()
 
     // Data from MedicalHistoryViewModel (LiveData)
     val personalInfo by medicalHistoryViewModel.personalInfo.observeAsState()
     val pregnancyHistory by medicalHistoryViewModel.pregnancyHistory.observeAsState()
 
+    // Debug states
+    var showDebugInfo by remember { mutableStateOf(false) }
+
     // Initialize ML model when screen loads
     LaunchedEffect(Unit) {
+        println("🔥 ReportAnalysisScreen: Starting ML model initialization")
         if (!isModelReady) {
             reportViewModel.initializeMLModel(context)
         }
     }
 
-    // Generate report when LiveData changes
-    LaunchedEffect(personalInfo, pregnancyHistory) {
-        personalInfo?.let { pInfo ->
-            pregnancyHistory?.let { pHistory ->
-                reportViewModel.processMLAnalysisFromLiveData(
-                    personalInfo = pInfo,
-                    pregnancyHistory = pHistory,
-                    userName = "Patient" // Or fetch from user data
-                )
-            }
+    // Generate report when both LiveData and model are ready
+    LaunchedEffect(personalInfo, pregnancyHistory, isModelReady) {
+        println("🔥 ReportAnalysisScreen: LaunchedEffect triggered")
+        println("🔥 PersonalInfo: $personalInfo")
+        println("🔥 PregnancyHistory: $pregnancyHistory")
+        println("🔥 IsModelReady: $isModelReady")
+
+        if (isModelReady && personalInfo != null && pregnancyHistory != null) {
+            println("🔥 All conditions met - processing ML analysis")
+            reportViewModel.processMLAnalysisFromLiveData(
+                personalInfo = personalInfo!!,
+                pregnancyHistory = pregnancyHistory!!,
+                userName = "Patient"
+            )
+        } else {
+            println("🔥 Conditions not met:")
+            println("   - Model Ready: $isModelReady")
+            println("   - Personal Info: ${personalInfo != null}")
+            println("   - Pregnancy History: ${pregnancyHistory != null}")
         }
     }
 
-    // Save button click handler
-    fun onSaveClick() {
-        personalInfo?.let { pInfo ->
-            pregnancyHistory?.let { pHistory ->
-                medicalHistoryViewModel.saveCompleteDataToFirebase(
-                    userId = userId,
-                    mlPrediction = mlPrediction
-                )
-            }
+    LaunchedEffect(generatedReport, mlPrediction) {
+        // Auto-save when both report and ML prediction are available
+        if (generatedReport != null && mlPrediction != null && personalInfo != null && pregnancyHistory != null) {
+            println("🔄 Auto-saving report to Firebase...")
+            medicalHistoryViewModel.saveCompleteDataToFirebase(
+                userId = userId,
+                mlPrediction = mlPrediction
+            )
         }
     }
-
 
 
 
@@ -107,52 +118,250 @@ fun ReportAnalysisScreen(
     ) {
         ReportTopBar(
             onBackClick = onBackClick,
-            onShareClick = onShareClick
+            onShareClick = onShareClick,
+            onDebugToggle = { showDebugInfo = !showDebugInfo }
         )
 
+        // Debug information (toggle-able)
+        if (showDebugInfo) {
+            DebugInfoCard(
+                personalInfo = personalInfo,
+                pregnancyHistory = pregnancyHistory,
+                mlPrediction = mlPrediction,
+                isModelReady = isModelReady,
+                processingStatus = processingStatus
+            )
+        }
+
         when {
+            isModelLoading -> {
+                ModelLoadingIndicator()
+            }
+
+            !isModelReady -> {
+                ModelNotReadyScreen {
+                    reportViewModel.initializeMLModel(context)
+                }
+            }
+
             isLoading -> {
-                LoadingIndicator()
+                AnalysisLoadingIndicator(processingStatus)
             }
 
             error != null -> {
-                val localError = error
                 ErrorScreen(
-                    error = localError ?: "Unknown error occurred",
+                    error = error!!,
                     onRetry = {
                         personalInfo?.let { pInfo ->
                             pregnancyHistory?.let { pHistory ->
-                                reportViewModel.processMLAnalysisFromLiveData(
-
-                                    personalInfo = pInfo,
-                                    pregnancyHistory = pHistory,
-                                    userName = "Patient"
-                                )
+                                reportViewModel.retryAnalysis(pInfo, pHistory, "Patient")
                             }
                         }
                     }
                 )
             }
 
-            generatedReport != null && personalInfo != null -> {
+            personalInfo == null || pregnancyHistory == null -> {
+                DataMissingScreen()
+            }
+
+            generatedReport != null -> {
                 ReportContent(
                     healthReport = generatedReport!!,
                     personalInfo = personalInfo!!,
-                    mlPrediction = mlPrediction,
-                    onSaveClick = {
-                        onSaveClick()
-                    }
+                    pregnancyHistory = pregnancyHistory!!,
+                    mlPrediction = mlPrediction
                 )
             }
 
             else -> {
-                EmptyStateScreen(
-                    onRetry = {
+                EmptyStateScreen {
+                    personalInfo?.let { pInfo ->
+                        pregnancyHistory?.let { pHistory ->
+                            reportViewModel.processMLAnalysisFromLiveData(pInfo, pHistory, "Patient")
+                        }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DebugInfoCard(
+    personalInfo: PersonalInformation?,
+    pregnancyHistory: PregnancyHistory?,
+    mlPrediction: ReportRepository.RiskPrediction?,
+    isModelReady: Boolean,
+    processingStatus: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = "🔧 Debug Information",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Model Ready: $isModelReady", fontSize = 12.sp)
+            Text("Processing: $processingStatus", fontSize = 12.sp)
+            Text("Personal Info: ${personalInfo != null}", fontSize = 12.sp)
+            Text("Pregnancy History: ${pregnancyHistory != null}", fontSize = 12.sp)
+            Text("ML Prediction: ${mlPrediction?.riskLevel ?: "None"}", fontSize = 12.sp)
+
+            if (personalInfo != null) {
+                Text("Age: ${personalInfo.age}", fontSize = 11.sp, color = Color.Gray)
+                Text("BP: ${personalInfo.systolicBloodPressure}/${personalInfo.diastolicBloodPressure}", fontSize = 11.sp, color = Color.Gray)
+            }
+
+            if (pregnancyHistory != null) {
+                Text("G${pregnancyHistory.gravida}P${pregnancyHistory.para}L${pregnancyHistory.liveBirths}A${pregnancyHistory.abortions}D${pregnancyHistory.childDeaths}", fontSize = 11.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModelLoadingIndicator() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                color = Color(0xFFE91E63),
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Loading AI Model...",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "Please wait while we prepare the risk assessment AI",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModelNotReadyScreen(onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Error,
+            contentDescription = "Model Error",
+            tint = Color.Red,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "AI Model Not Ready",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Red
+        )
+        Text(
+            text = "The risk assessment model failed to load properly.",
+            fontSize = 14.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
+        ) {
+            Text("Retry Loading Model")
+        }
+    }
+}
+
+@Composable
+private fun AnalysisLoadingIndicator(status: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator(
+                color = Color(0xFFE91E63),
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Analyzing Your Health Data",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+            if (status.isNotEmpty()) {
+                Text(
+                    text = status,
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
+    }
+}
 
+@Composable
+private fun DataMissingScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = "Data Missing",
+            tint = Color.Red,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Medical Data Missing",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Red
+        )
+        Text(
+            text = "Please complete the medical history forms before viewing the analysis.",
+            fontSize = 14.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp)
+        )
     }
 }
 
@@ -160,8 +369,8 @@ fun ReportAnalysisScreen(
 private fun ReportContent(
     healthReport: HealthReport,
     personalInfo: PersonalInformation,
-    mlPrediction: ReportRepository.RiskPrediction?,
-    onSaveClick: () -> Unit
+    pregnancyHistory: PregnancyHistory,
+    mlPrediction: ReportRepository.RiskPrediction?
 ) {
     Column(
         modifier = Modifier
@@ -173,6 +382,7 @@ private fun ReportContent(
             color = Color.Gray.copy(alpha = 0.3f),
             thickness = 1.dp
         )
+
         PatientInfoSection(
             name = healthReport.patientName,
             date = healthReport.date
@@ -188,6 +398,11 @@ private fun ReportContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Show pregnancy history summary
+        PregnancyHistorySection(pregnancyHistory = pregnancyHistory)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         DetailedAnalysisSection(
             healthReport = healthReport,
             personalInfo = personalInfo
@@ -195,7 +410,7 @@ private fun ReportContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Updated HealthStatusSection with ML prediction
+        // ML-Enhanced Health Status Section - This is the key part!
         MLEnhancedHealthStatusSection(
             originalStatus = healthReport.overallStatus,
             mlPrediction = mlPrediction
@@ -203,8 +418,7 @@ private fun ReportContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        ActionButtonsSection(
-            onSaveReport = onSaveClick,
+        ShareButtonSection(
             onShareResults = { /* Handle share */ }
         )
 
@@ -212,7 +426,54 @@ private fun ReportContent(
     }
 }
 
-// NEW: ML-Enhanced Health Status Section
+@Composable
+fun PregnancyHistorySection(pregnancyHistory: PregnancyHistory) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "Obstetric History",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(text = "Gravida: ${pregnancyHistory.gravida}", fontSize = 14.sp)
+                    Text(text = "Para: ${pregnancyHistory.para}", fontSize = 14.sp)
+                    Text(text = "Live Births: ${pregnancyHistory.liveBirths}", fontSize = 14.sp)
+                }
+                Column {
+                    Text(text = "Abortions: ${pregnancyHistory.abortions}", fontSize = 14.sp)
+                    Text(text = "Child Deaths: ${pregnancyHistory.childDeaths}", fontSize = 14.sp)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "G${pregnancyHistory.gravida}P${pregnancyHistory.para}L${pregnancyHistory.liveBirths}A${pregnancyHistory.abortions}D${pregnancyHistory.childDeaths}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFFE91E63)
+            )
+        }
+    }
+}
+
+// ML-Enhanced Health Status Section - Updated to show better feedback
 @Composable
 fun MLEnhancedHealthStatusSection(
     originalStatus: HealthStatus,
@@ -224,13 +485,54 @@ fun MLEnhancedHealthStatusSection(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // ML Prediction Card (if available)
-        mlPrediction?.let { prediction ->
-            MLPredictionCard(prediction = prediction)
-        }
+        Text(
+            text = "AI Risk Assessment",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
 
-        // Original Health Status Card (keeping as fallback or additional info)
-        //OriginalHealthStatusCard(status = originalStatus, showAsSecondary = mlPrediction != null)
+        // ML Prediction Card (if available)
+        if (mlPrediction != null) {
+            MLPredictionCard(prediction = mlPrediction)
+        } else {
+            // Show that ML prediction is missing
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "AI Prediction Unavailable",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF9800),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "The AI model could not generate a risk prediction. Using traditional assessment methods.",
+                        fontSize = 14.sp,
+                        color = Color(0xFFFF9800).copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -260,7 +562,7 @@ private fun MLPredictionCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = cardColor),
         shape = RoundedCornerShape(16.dp),
-        //elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -268,14 +570,14 @@ private fun MLPredictionCard(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // ML Badge
+            // AI Badge
             Surface(
                 color = iconColor.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier.padding(bottom = 12.dp)
             ) {
                 Text(
-                    text = "AI Risk Assessment",
+                    text = "🤖 AI Risk Assessment",
                     color = iconColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
@@ -296,51 +598,36 @@ private fun MLPredictionCard(
             // Risk Level
             Text(
                 text = prediction.riskLevel,
-                fontSize = 20.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = iconColor,
                 textAlign = TextAlign.Center
             )
 
-            // Risk Percentage
+            // Confidence Score
+            if (prediction.confidence > 0) {
+                Text(
+                    text = "Confidence: ${(prediction.confidence * 100).toInt()}%",
+                    fontSize = 14.sp,
+                    color = iconColor.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
 
+            // Risk Level Description
+            val description = when (prediction.riskLevel) {
+                "High Risk" -> "Immediate medical attention recommended. Please consult with your healthcare provider urgently."
+                "Moderate Risk" -> "Regular monitoring recommended. Schedule follow-up appointments as advised by your doctor."
+                else -> "Continue regular prenatal care. Maintain healthy lifestyle habits."
+            }
 
-            // Recommendations
-//            if (prediction.recommendations.isNotEmpty()) {
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                Text(
-//                    text = "AI Recommendations:",
-//                    fontSize = 14.sp,
-//                    fontWeight = FontWeight.SemiBold,
-//                    color = iconColor,
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(8.dp))
-//
-//                prediction.recommendations.take(3).forEach { recommendation ->
-//                    Row(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .padding(vertical = 2.dp),
-//                        verticalAlignment = Alignment.Top
-//                    ) {
-//                        Text(
-//                            text = "•",
-//                            color = iconColor,
-//                            fontSize = 14.sp,
-//                            modifier = Modifier.padding(end = 6.dp)
-//                        )
-//                        Text(
-//                            text = recommendation,
-//                            fontSize = 13.sp,
-//                            color = iconColor.copy(alpha = 0.9f),
-//                            modifier = Modifier.weight(1f)
-//                        )
-//                    }
-//                }
-//            }
+            Text(
+                text = description,
+                fontSize = 14.sp,
+                color = iconColor.copy(alpha = 0.9f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 12.dp)
+            )
         }
     }
 }
@@ -349,12 +636,13 @@ private fun MLPredictionCard(
 @Composable
 fun ReportTopBar(
     onBackClick: () -> Unit,
-    onShareClick: () -> Unit
+    onShareClick: () -> Unit,
+    onDebugToggle: () -> Unit = {}
 ) {
     TopAppBar(
         title = {
             Text(
-                "Report Analysis",
+                "AI Risk Analysis",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
@@ -370,6 +658,14 @@ fun ReportTopBar(
             }
         },
         actions = {
+            // Debug toggle (remove in production)
+            IconButton(onClick = onDebugToggle) {
+                Icon(
+                    imageVector = Icons.Default.BugReport,
+                    contentDescription = "Debug",
+                    tint = Color.Gray
+                )
+            }
             IconButton(onClick = onShareClick) {
                 Icon(
                     imageVector = Icons.Default.Share,
@@ -383,6 +679,7 @@ fun ReportTopBar(
     )
 }
 
+// Keep existing components (PatientInfoSection, QuickStatsSection, etc.)
 @Composable
 fun PatientInfoSection(
     name: String,
@@ -722,8 +1019,7 @@ fun GradientProgressIndicator(
 }
 
 @Composable
-fun ActionButtonsSection(
-    onSaveReport: () -> Unit,
+fun ShareButtonSection(
     onShareResults: () -> Unit
 ) {
     Column(
@@ -732,24 +1028,34 @@ fun ActionButtonsSection(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Button(
-            onClick = onSaveReport,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE91E63)
-            ),
-            shape = RoundedCornerShape(25.dp)
+        // Auto-save indicator
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E8))
         ) {
-            Text(
-                text = "Save Report",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CloudDone,
+                    contentDescription = "Auto-saved",
+                    tint = Color(0xFF4CAF50),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Report automatically saved to your records",
+                    fontSize = 14.sp,
+                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
+        // Share button only
         OutlinedButton(
             onClick = onShareResults,
             modifier = Modifier
@@ -780,18 +1086,6 @@ fun ActionButtonsSection(
 }
 
 @Composable
-private fun LoadingIndicator() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
 private fun ErrorScreen(error: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier
@@ -800,8 +1094,15 @@ private fun ErrorScreen(error: String, onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Icon(
+            imageVector = Icons.Default.Error,
+            contentDescription = "Error",
+            tint = Color.Red,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Error loading report",
+            text = "Analysis Error",
             color = Color.Red,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
@@ -813,8 +1114,11 @@ private fun ErrorScreen(error: String, onRetry: () -> Unit) {
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
+        ) {
+            Text("Retry Analysis")
         }
     }
 }
@@ -828,14 +1132,24 @@ private fun EmptyStateScreen(onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Icon(
+            imageVector = Icons.Default.Assessment,
+            contentDescription = "No Analysis",
+            tint = Color.Gray,
+            modifier = Modifier.size(48.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No report available",
+            text = "No Analysis Available",
             color = Color.Gray,
             fontSize = 18.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRetry) {
-            Text("Load Report")
+        Button(
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE91E63))
+        ) {
+            Text("Generate Analysis")
         }
     }
 }
