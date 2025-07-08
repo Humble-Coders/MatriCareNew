@@ -71,9 +71,6 @@ data class MedicalHistory(
     val date: Long = System.currentTimeMillis(), //
     // ML prediction fields
     val mlRiskLevel: String? = null,
-    val mlRiskScore: Float? = null,           // changed to Float? to match your mlPrediction?.riskScore
-    val mlRiskPercentage: Float? = null,      // changed to Float? to match your mlPrediction?.riskPercentage
-    val mlRecommendations: List<String>? = emptyList(), // changed to nullable List<String>? to match your code
     val mlPredictionTimestamp: Long? = null,
 
     // Versioning

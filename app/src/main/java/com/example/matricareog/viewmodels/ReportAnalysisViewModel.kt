@@ -30,7 +30,6 @@ class ReportViewModel(
     val isLoading: LiveData<Boolean> = _isLoading
 
     private val _isModelLoading = MutableLiveData(false)
-    val isModelLoading: LiveData<Boolean> = _isModelLoading
 
     private val _isModelReady = MutableLiveData(false)
     val isModelReady: LiveData<Boolean> = _isModelReady
@@ -38,10 +37,6 @@ class ReportViewModel(
     // Error state
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
-
-    // REMOVED: Save state - no longer needed since MedicalHistoryViewModel handles saves
-    // private val _dataSaved = MutableLiveData(false)
-    // val dataSaved: LiveData<Boolean> = _dataSaved
 
     private val TAG = "ReportViewModel"
 
