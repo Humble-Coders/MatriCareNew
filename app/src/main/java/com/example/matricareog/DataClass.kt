@@ -96,19 +96,6 @@ enum class MetricStatus {
     NORMAL, WARNING, CRITICAL
 }
 
-data class HealthDataPoint(
-    val date: String = "",
-    val timestamp: Long = 0L,
-    val hemoglobin: Double = 0.0,
-    val hba1c: Double = 0.0
-)
-
-data class ChartData(
-    val hemoglobinData: List<HealthDataPoint> = emptyList(),
-    val hba1cData: List<HealthDataPoint> = emptyList(),
-    val currentHemoglobin: Double = 0.0,
-    val currentHba1c: Double = 0.0
-)
 
 sealed class MatriCareState {
     object Loading : MatriCareState()
@@ -121,6 +108,38 @@ data class ChartRange(
     val max: Double,
     val unit: String,
     val label: String
+)
+
+data class HealthDataPoint(
+    val date: String = "",
+    val timestamp: Long = 0L,
+    val hemoglobin: Double = 0.0,
+    val hba1c: Double = 0.0,
+    val glucose: Double = 0.0,
+    val systolicBP: Double = 0.0,
+    val diastolicBP: Double = 0.0,
+    val pulseRate: Double = 0.0,
+    val bodyTemperature: Double = 0.0,
+    val respirationRate: Double = 0.0
+)
+
+// Updated ChartData class
+data class ChartData(
+    val hemoglobinData: List<HealthDataPoint> = emptyList(),
+    val hba1cData: List<HealthDataPoint> = emptyList(),
+    val glucoseData: List<HealthDataPoint> = emptyList(),
+    val bloodPressureData: List<HealthDataPoint> = emptyList(),
+    val pulseData: List<HealthDataPoint> = emptyList(),
+    val temperatureData: List<HealthDataPoint> = emptyList(),
+    val respirationData: List<HealthDataPoint> = emptyList(),
+    val currentHemoglobin: Double = 0.0,
+    val currentHba1c: Double = 0.0,
+    val currentGlucose: Double = 0.0,
+    val currentSystolicBP: Double = 0.0,
+    val currentDiastolicBP: Double = 0.0,
+    val currentPulseRate: Double = 0.0,
+    val currentBodyTemperature: Double = 0.0,
+    val currentRespirationRate: Double = 0.0
 )
 
 data class PregnancyInfo(
