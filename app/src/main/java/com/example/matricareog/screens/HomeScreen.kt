@@ -22,9 +22,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lightbulb
@@ -64,7 +66,8 @@ fun HomeScreen(
     onLogoutClicked: () -> Unit,
     onDietClicked: () -> Unit,
     onYogaClicked: () -> Unit,
-    onDoClicked: () -> Unit
+    onDoClicked: () -> Unit,
+    onChatbotClicked: () -> Unit
 ) {
     val currentUserState = authViewModel.currentUser.collectAsState()
     val currentUser = currentUserState.value
@@ -111,7 +114,8 @@ fun HomeScreen(
                     onMaternalGuideClicked = onMaternalGuideClicked,
                     onReportHistoryClicked = onReportHistoryClicked,
                     onNavigateToReports = onNavigateToReports,
-                    userId = userId
+                    userId = userId,
+                    onChatbotClicked = onChatbotClicked
                 )
             }
 
@@ -315,6 +319,7 @@ private fun QuickActionsSection(
     onMaternalGuideClicked: () -> Unit,
     onReportHistoryClicked: () -> Unit,
     onNavigateToReports: (String) -> Unit,
+    onChatbotClicked: () -> Unit, // Add this parameter
     userId: String
 ) {
     Column {
@@ -347,33 +352,50 @@ private fun QuickActionsSection(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        // Update to show 3 cards in a row
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            EnhancedQuickActionCard(
-                title = "Maternal Guide",
-                subtitle = "Expert guidance & tips",
-                icon = Icons.AutoMirrored.Filled.MenuBook,
-                bgGradient = listOf(Color(0xFFE8F5E8), Color(0xFFF1F8E9)),
-                iconBgColor = Color(0xFF2E7D32),
-                iconColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = onMaternalGuideClicked
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                EnhancedQuickActionCard(
+                    title = "Maternal Guide",
+                    subtitle = "Expert guidance & tips",
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
+                    bgGradient = listOf(Color(0xFFE8F5E8), Color(0xFFF1F8E9)),
+                    iconBgColor = Color(0xFF2E7D32),
+                    iconColor = Color.White,
+                    modifier = Modifier.weight(1f),
+                    onClick = onMaternalGuideClicked
+                )
 
+                EnhancedQuickActionCard(
+                    title = "Report History",
+                    subtitle = "View past records",
+                    icon = Icons.Default.Assessment,
+                    bgGradient = listOf(Color(0xFFF0F4FF), Color(0xFFE3F2FD)),
+                    iconBgColor = Color(0xFF1976D2),
+                    iconColor = Color.White,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        onReportHistoryClicked()
+                        onNavigateToReports(userId)
+                    }
+                )
+            }
+
+            // Add chatbot card in a second row
             EnhancedQuickActionCard(
-                title = "Report History",
-                subtitle = "View past records",
-                icon = Icons.Default.Assessment,
-                bgGradient = listOf(Color(0xFFF0F4FF), Color(0xFFE3F2FD)),
-                iconBgColor = Color(0xFF1976D2),
+                title = "AI Assistant",
+                subtitle = "Ask pregnancy questions",
+                icon = Icons.Default.Chat,
+                bgGradient = listOf(Color(0xFFFFF0F3), Color(0xFFFFE0E6)),
+                iconBgColor = Color(0xFFE91E63),
                 iconColor = Color.White,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onReportHistoryClicked()
-                    onNavigateToReports(userId)
-                }
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onChatbotClicked
             )
         }
     }

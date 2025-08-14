@@ -2,12 +2,12 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="matricareog.app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-12T13:26:47.463025Z">
+        <DropdownSelection timestamp="2025-07-07T19:49:33.041444Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/aaryankaushal/.android/avd/Pixel_9_Pro_XL_API_35.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/ishankgoyal/.android/avd/Medium_Phone.avd" />
             </handle>
           </Target>
         </DropdownSelection>

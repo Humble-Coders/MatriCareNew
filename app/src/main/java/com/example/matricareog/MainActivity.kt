@@ -40,6 +40,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var matriCareViewModel: MatriCareViewModel
     private lateinit var medicalHistoryViewModel: MedicalHistoryViewModel
     private lateinit var reportAnalysisViewModel: ReportAnalysisViewModel
+    private lateinit var chatbotViewModel: ChatbotViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -57,6 +59,8 @@ class MainActivity : ComponentActivity() {
         matriCareViewModel = MatriCareViewModel(matriCareRepository)
         medicalHistoryViewModel = MedicalHistoryViewModel(medicalHistoryRepository)
         reportAnalysisViewModel = ReportAnalysisViewModel(reportRepository)
+        chatbotViewModel = ChatbotViewModel()
+
 
         setContent {
             MatricareogTheme {
@@ -170,6 +174,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onDoClicked = {
                                     navController.navigate(Routes.DOS_AND_DONTS)
+                                },
+                                onChatbotClicked = {  // Add this parameter
+                                    navController.navigate(Routes.CHATBOT)
                                 }
                             )
                         }
@@ -252,6 +259,14 @@ class MainActivity : ComponentActivity() {
                         composable(Routes.YOGA_EXERCISES) {
                             YogaExercisesScreen(onBackClick = { navController.popBackStack() })
                         }
+
+                        composable(Routes.CHATBOT) {
+                            ChatbotScreen(
+                                onBackClick = { navController.popBackStack() },
+                                viewModel = chatbotViewModel
+                            )
+                        }
+
                     }
                 }
             }
@@ -292,6 +307,7 @@ object Routes {
     const val MEDICAL_HISTORY_2 = "WelcomeScreenTwo/{userId}"
     const val REPORT_ANALYSIS = "ReportAnalysisScreen/{userId}"
     const val MATRICARE = "GraphReportScreen"
+    const val CHATBOT = "ChatbotScreen" // Add this line
 
     fun medicalHistory1Route(userId: String) = "WelcomeScreenOne/$userId"
     fun medicalHistory2Route(userId: String) = "WelcomeScreenTwo/$userId"
