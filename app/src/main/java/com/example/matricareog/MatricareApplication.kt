@@ -7,11 +7,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancel
 
 class MatricareApplication : Application() {
 
-    // Application-scoped coroutine for background initialization
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // Use IO dispatcher for background operations and add proper lifecycle management
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -19,7 +20,7 @@ class MatricareApplication : Application() {
         Log.d("MatricareApp", "🚀 Application starting - initializing API-based chatbot...")
 
         // Initialize API-based chatbot in background
-        initializeChatbot()
+      //  initializeChatbot()
     }
 
     private fun initializeChatbot() {
@@ -35,7 +36,14 @@ class MatricareApplication : Application() {
                 }
             } catch (e: Exception) {
                 Log.e("MatricareApp", "💥 Exception during API chatbot initialization: ${e.message}", e)
-            }
-        }
+                    }
     }
+
+    fun onTerminate() {
+        super.onTerminate()
+        // Cancel all coroutines when application terminates
+        applicationScope.cancel()
+        Log.d("MatricareApp", "🔄 Application terminating - cleaning up coroutines")
+    }
+}
 }

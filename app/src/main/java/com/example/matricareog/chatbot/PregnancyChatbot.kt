@@ -4,6 +4,10 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 data class ChatResponse(
     val answer: String,
@@ -11,6 +15,15 @@ data class ChatResponse(
     val similarityScore: Double,
     val confidence: String
 )
+
+// Comprehensive error handling for chatbot
+sealed class ChatbotError : Exception() {
+    object NetworkError : ChatbotError()
+    object ApiError : ChatbotError()
+    object InvalidInputError : ChatbotError()
+    data class ServerError(val code: Int, override val message: String) : ChatbotError()
+    data class UnknownError(val exception: Exception) : ChatbotError()
+}
 
 class PregnancyChatbot private constructor() {
 
@@ -80,7 +93,7 @@ class PregnancyChatbot private constructor() {
         }
     }
 
-    // Get response for user question using API
+    // Get response for user question using API with comprehensive error handling
     suspend fun getResponse(userQuestion: String): ChatResponse {
         return withContext(Dispatchers.Default) {
             if (userQuestion.isBlank()) {
@@ -93,9 +106,9 @@ class PregnancyChatbot private constructor() {
             }
 
             try {
-                Log.d(TAG, "🤔 Processing question: '$userQuestion'")
+                Log.d(TAG, "🤔 Processing question: '${userQuestion.trim()}'")
 
-                // If not ready, try to check health first
+                // Check API health if not ready
                 if (!isApiReady) {
                     Log.d(TAG, "API not ready, attempting health check...")
                     val healthCheckSuccess = checkApiHealth()
@@ -112,7 +125,7 @@ class PregnancyChatbot private constructor() {
                 }
 
                 val request = ChatbotRequest(
-                    question = userQuestion,
+                    question = userQuestion.trim(),
                     threshold = 0.3
                 )
 
@@ -148,8 +161,18 @@ class PregnancyChatbot private constructor() {
                 } else {
                     Log.e(TAG, "❌ API request failed: ${response.code()} - ${response.message()}")
                     isApiReady = false
+                    
+                    val errorMessage = when (response.code()) {
+                        401 -> "Authentication failed. Please try logging in again."
+                        403 -> "Access denied. Please check your permissions."
+                        404 -> "Service not found. Please try again later."
+                        500 -> "Server error. Please try again in a few minutes."
+                        503 -> "Service temporarily unavailable. Please try again later."
+                        else -> "I'm sorry, I'm having trouble connecting to the service. Please try again in a moment or use the refresh button."
+                    }
+                    
                     ChatResponse(
-                        answer = "I'm sorry, I'm having trouble connecting to the service. Please try again in a moment or use the refresh button.",
+                        answer = errorMessage,
                         matchedQuestion = null,
                         similarityScore = 0.0,
                         confidence = "Error"
@@ -158,8 +181,16 @@ class PregnancyChatbot private constructor() {
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error processing question: ${e.message}", e)
                 isApiReady = false
+                
+                val errorMessage = when (e) {
+                    is UnknownHostException -> "No internet connection. Please check your network settings."
+                    is SocketTimeoutException -> "Request timed out. Please try again."
+                    is ConnectException -> "Unable to connect to the service. Please try again later."
+                    else -> "I'm sorry, I encountered an error while processing your question. Please check your internet connection and try again."
+                }
+                
                 ChatResponse(
-                    answer = "I'm sorry, I encountered an error while processing your question. Please check your internet connection and try again.",
+                    answer = errorMessage,
                     matchedQuestion = null,
                     similarityScore = 0.0,
                     confidence = "Error"
@@ -213,5 +244,38 @@ class PregnancyChatbot private constructor() {
     // Test API connection
     suspend fun testConnection(): Boolean {
         return checkApiHealth()
+    }
+
+    // Enhanced error recovery with retry logic
+    suspend fun retryConnection(maxRetries: Int = 3): Boolean {
+        repeat(maxRetries) { attempt ->
+            try {
+                Log.d(TAG, "🔄 Attempting to reconnect (attempt ${attempt + 1}/$maxRetries)")
+                val success = checkApiHealth()
+                if (success) {
+                    isApiReady = true
+                    Log.d(TAG, "✅ Reconnection successful on attempt ${attempt + 1}")
+                    return true
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Reconnection attempt ${attempt + 1} failed: ${e.message}")
+            }
+            
+            if (attempt < maxRetries - 1) {
+                kotlinx.coroutines.delay(1000L * (attempt + 1)) // Exponential backoff
+            }
+        }
+        
+        Log.e(TAG, "❌ Failed to reconnect after $maxRetries attempts")
+        isApiReady = false
+        return false
+    }
+
+    // Get detailed error information for debugging
+    fun getLastError(): String? {
+        return when {
+            !isApiReady -> "API not ready - connection issues"
+            else -> null
+        }
     }
 }

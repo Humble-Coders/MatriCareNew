@@ -27,9 +27,9 @@ class ChatbotViewModel : ViewModel() {
 
     init {
         // Load suggested topics immediately
-        loadSuggestedTopics()
+       // loadSuggestedTopics()
         // Start with initial status check
-        checkInitialStatus()
+       // checkInitialStatus()
     }
 
     private fun checkInitialStatus() {

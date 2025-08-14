@@ -387,16 +387,16 @@ private fun QuickActionsSection(
             }
 
             // Add chatbot card in a second row
-            EnhancedQuickActionCard(
-                title = "AI Assistant",
-                subtitle = "Ask pregnancy questions",
-                icon = Icons.Default.Chat,
-                bgGradient = listOf(Color(0xFFFFF0F3), Color(0xFFFFE0E6)),
-                iconBgColor = Color(0xFFE91E63),
-                iconColor = Color.White,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onChatbotClicked
-            )
+//            EnhancedQuickActionCard(
+//                title = "AI Assistant",
+//                subtitle = "Ask pregnancy questions",
+//                icon = Icons.Default.Chat,
+//                bgGradient = listOf(Color(0xFFFFF0F3), Color(0xFFFFE0E6)),
+//                iconBgColor = Color(0xFFE91E63),
+//                iconColor = Color.White,
+//                modifier = Modifier.fillMaxWidth(),
+//                onClick = onChatbotClicked
+//            )
         }
     }
 }
