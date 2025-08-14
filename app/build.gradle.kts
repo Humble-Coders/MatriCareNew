@@ -98,8 +98,8 @@ dependencies {
 
     // TensorFlow Lite (basic - removed select-tf-ops to reduce size)
     implementation(libs.tensorflow.lite)
-    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation ("org.apache.commons:commons-math3:3.6.1")
+//    implementation ("org.tensorflow:tensorflow-lite-support:0.4.4")
+//    implementation ("org.apache.commons:commons-math3:3.6.1")
 
 
 
@@ -139,7 +139,7 @@ dependencies {
 
 
     // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.datastore:datastore-preferences:1.1.1");
 
     // Image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
@@ -154,4 +154,8 @@ dependencies {
     // Debug tools
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

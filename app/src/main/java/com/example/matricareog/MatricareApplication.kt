@@ -16,9 +16,9 @@ class MatricareApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Log.d("MatricareApp", "🚀 Application starting - initializing chatbot...")
+        Log.d("MatricareApp", "🚀 Application starting - initializing API-based chatbot...")
 
-        // Initialize chatbot in background
+        // Initialize API-based chatbot in background
         initializeChatbot()
     }
 
@@ -29,12 +29,12 @@ class MatricareApplication : Application() {
                 val success = chatbot.initialize(this@MatricareApplication)
 
                 if (success) {
-                    Log.d("MatricareApp", "✅ Pregnancy chatbot initialized successfully!")
+                    Log.d("MatricareApp", "✅ API-based pregnancy chatbot initialized successfully!")
                 } else {
-                    Log.e("MatricareApp", "❌ Failed to initialize pregnancy chatbot")
+                    Log.e("MatricareApp", "❌ Failed to initialize API-based pregnancy chatbot")
                 }
             } catch (e: Exception) {
-                Log.e("MatricareApp", "💥 Exception during chatbot initialization: ${e.message}", e)
+                Log.e("MatricareApp", "💥 Exception during API chatbot initialization: ${e.message}", e)
             }
         }
     }
