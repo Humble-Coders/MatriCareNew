@@ -152,7 +152,7 @@ fun MaternalGuideTopBar(
                         color = Color.Black
                     )
                     Text(
-                        text = "Care",
+                        text = "Care    ",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFE91E63)

@@ -2,55 +2,90 @@ package com.example.matricareog.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.matricareog.model.HealthMetric
-import com.example.matricareog.model.HealthReport
-import com.example.matricareog.model.HealthStatus
-import com.example.matricareog.model.MetricStatus
-import com.example.matricareog.viewmodels.ReportAnalysisViewModel
-import com.example.matricareog.viewmodels.MedicalHistoryViewModel
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Bloodtype
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.times
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.compose.ui.platform.LocalContext
+import com.example.matricareog.R
+import com.example.matricareog.model.HealthMetric
+import com.example.matricareog.model.HealthReport
+import com.example.matricareog.model.HealthStatus
+import com.example.matricareog.model.MetricStatus
 import com.example.matricareog.model.PersonalInformation
 import com.example.matricareog.model.PregnancyHistory
-import com.example.matricareog.R
 import com.example.matricareog.repository.ReportRepository
 import com.example.matricareog.viewmodels.AuthViewModel
+import com.example.matricareog.viewmodels.MedicalHistoryViewModel
+import com.example.matricareog.viewmodels.ReportAnalysisViewModel
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -420,6 +455,11 @@ private fun ReportContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Vitals Summary Section
+        VitalsSummarySection(personalInfo = personalInfo)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Show pregnancy history summary
         PregnancyHistorySection(pregnancyHistory = pregnancyHistory)
 
@@ -445,6 +485,141 @@ private fun ReportContent(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun VitalsSummarySection(personalInfo: PersonalInformation) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Header
+            Text(
+                text = "Vitals Summary",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+            
+            // Compact grid layout - 2 columns, 2 rows using simple Column/Row
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Row 1: Random Blood Sugar & HbA1c
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CompactVitalItem(
+                        icon = Icons.Default.Bloodtype,
+                        label = "Random Blood Sugar",
+                        value = try { "%.1f mg/dL".format(personalInfo.glucose) } catch (e: Exception) { "N/A" },
+                        color = Color(0xFFFF9800),
+                        modifier = Modifier.weight(1f)
+                    )
+                    CompactVitalItem(
+                        icon = Icons.Default.Bloodtype,
+                        label = "HbA1c",
+                        value = try { "%.1f%%".format(personalInfo.hba1c) } catch (e: Exception) { "N/A" },
+                        color = Color(0xFF9C27B0),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                
+                // Row 2: Hemoglobin & Respiration
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CompactVitalItem(
+                        icon = Icons.Default.Bloodtype,
+                        label = "Hemoglobin",
+                        value = try { "%.1f g/dL".format(personalInfo.hemoglobinLevel) } catch (e: Exception) { "N/A" },
+                        color = Color(0xFFF44336),
+                        modifier = Modifier.weight(1f)
+                    )
+                    CompactVitalItem(
+                        icon = Icons.Default.Air,
+                        label = "Respiration",
+                        value = "${personalInfo.respirationRate}/min",
+                        color = Color(0xFF00BCD4),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompactVitalItem(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Icon with colored background
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = color.copy(alpha = 0.15f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(6.dp))
+            
+            // Value (larger, more prominent)
+            Text(
+                text = value,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+            
+            // Label (smaller, below value)
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -679,22 +854,6 @@ fun ReportTopBar(
                 )
             }
         },
-        actions = {
-            // Debug toggle (remove in production)
-            IconButton(onClick = onDebugToggle) {
-                Icon(
-                    imageVector = Icons.Default.BugReport,
-                    contentDescription = "Debug",
-                    tint = Color.Gray
-                )
-            }
-            IconButton(onClick = onShareClick) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Share"
-                )
-            }
-        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.White
         )
@@ -863,7 +1022,11 @@ fun DetailedAnalysisSection(
     personalInfo: PersonalInformation
 ) {
     val estimatedOxygenSaturation = remember(personalInfo.pulseRate, personalInfo.respirationRate) {
-        (100 - (personalInfo.respirationRate * 0.5 + personalInfo.pulseRate * 0.1) / 2).coerceIn(85.0, 100.0)
+        // Improved oxygen saturation calculation based on medical literature
+        val baseO2 = 98.0 // Normal baseline
+        val pulseEffect = (personalInfo.pulseRate - 80) * 0.1 // Heart rate effect
+        val respEffect = (personalInfo.respirationRate - 16) * 0.2 // Respiration effect
+        (baseO2 - pulseEffect - respEffect).coerceIn(85.0, 100.0)
     }
     // Combine metrics from both sources
     val metrics = remember(healthReport, personalInfo) {
@@ -874,7 +1037,7 @@ fun DetailedAnalysisSection(
                 unit = "/min",
                 currentValue = personalInfo.respirationRate.toFloat(),
                 rangeMin = 12f,
-                rangeMax = 20f,
+                rangeMax = 20f, // Normal range for pregnancy
                 icon = R.drawable.respiration
             ),
             createHealthMetric(
@@ -882,17 +1045,26 @@ fun DetailedAnalysisSection(
                 value = "%.1f".format(personalInfo.hemoglobinLevel),
                 unit = "g/dL",
                 currentValue = personalInfo.hemoglobinLevel.toFloat(),
-                rangeMin = 12f,
-                rangeMax = 16f,
+                rangeMin = 11.0f, // Corrected for pregnancy
+                rangeMax = 16.0f,
                 icon = R.drawable.hemoglobin
             ),
             createHealthMetric(
-                title = "Blood Glucose",
+                title = "Random Blood Sugar (RBS)",
                 value = "%.1f".format(personalInfo.glucose),
                 unit = "mg/dL",
                 currentValue = personalInfo.glucose.toFloat(),
                 rangeMin = 70f,
-                rangeMax = 100f,
+                rangeMax = 140f, // Corrected upper limit for random blood sugar
+                icon = R.drawable.glucose
+            ),
+            createHealthMetric(
+                title = "HbA1c Level",
+                value = "%.1f".format(personalInfo.hba1c),
+                unit = "%",
+                currentValue = personalInfo.hba1c.toFloat(),
+                rangeMin = 4.0f,
+                rangeMax = 5.7f, // Corrected upper limit
                 icon = R.drawable.glucose
             ),
             createHealthMetric(
@@ -901,7 +1073,7 @@ fun DetailedAnalysisSection(
                 unit = "%",
                 currentValue = estimatedOxygenSaturation.toFloat(),
                 rangeMin = 95f,
-                rangeMax = 100f,
+                rangeMax = 100f, // Normal range for pregnancy
                 icon = R.drawable.respiration
             )
         )
@@ -937,8 +1109,11 @@ private fun createHealthMetric(
     icon: Int
 ): HealthMetric {
     val normalRange = "${rangeMin.toInt()}-${rangeMax.toInt()}"
+    
+    // Improved status calculation with better thresholds
     val status = when {
-        currentValue < rangeMin * 0.9f || currentValue > rangeMax * 1.1f -> MetricStatus.CRITICAL
+        currentValue.isNaN() || currentValue.isInfinite() -> MetricStatus.CRITICAL
+        currentValue < rangeMin * 0.85f || currentValue > rangeMax * 1.15f -> MetricStatus.CRITICAL
         currentValue < rangeMin * 0.95f || currentValue > rangeMax * 1.05f -> MetricStatus.WARNING
         else -> MetricStatus.NORMAL
     }
@@ -950,127 +1125,14 @@ private fun createHealthMetric(
         unit = unit,
         normalRange = normalRange,
         currentValue = currentValue,
-        rangeMin = rangeMin,
         rangeMax = rangeMax,
+        rangeMin = rangeMin,
         icon = icon,
         status = status
     )
 }
 
-//@Composable
-//fun HealthMetricCard(
-//    metric: HealthMetric
-//) {
-//    val statusColor = when(metric.status) {
-//        MetricStatus.NORMAL -> Color(0xFF4CAF50)
-//        MetricStatus.WARNING -> Color(0xFFFF9800)
-//        MetricStatus.CRITICAL -> Color(0xFFF44336)
-//    }
-//
-//    Card(
-//        modifier = Modifier.fillMaxWidth(),
-//        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-//        colors = CardDefaults.cardColors(containerColor = Color.White),
-//        shape = RoundedCornerShape(12.dp)
-//    ) {
-//        Column(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp)
-//        ) {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Icon(
-//                        painter = painterResource(id = metric.icon),
-//                        contentDescription = null,
-//                        tint = statusColor,
-//                        modifier = Modifier.size(24.dp)
-//                    )
-//                    Spacer(modifier = Modifier.width(8.dp))
-//                    Text(
-//                        text = metric.title,
-//                        fontSize = 20.sp,
-//                        fontWeight = FontWeight.Medium,
-//                        color = Color.Black
-//                    )
-//                }
-//                IconButton(
-//                    onClick = { /* Handle info click */ },
-//                    modifier = Modifier.size(24.dp)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Info,
-//                        contentDescription = "Info",
-//                        tint = Color(0xFFE91E63),
-//                        modifier = Modifier.size(24.dp)
-//                    )
-//                }
-//            }
-//
-//            Text(
-//                text = "${metric.value} ${metric.unit}",
-//                fontSize = 16.sp,
-//                color = Color.Gray,
-//                modifier = Modifier.padding(start = 28.dp, top = 4.dp)
-//            )
-//
-//            Spacer(modifier = Modifier.height(12.dp))
-//
-//            GradientProgressIndicator(
-//                currentValue = metric.currentValue,
-//                minValue = metric.rangeMin,
-//                maxValue = metric.rangeMax
-//            )
-//
-//            Text(
-//                text = "Range: ${metric.normalRange}",
-//                fontSize = 12.sp,
-//                color = Color.Gray,
-//                modifier = Modifier.padding(top = 4.dp)
-//            )
-//        }
-//    }
-//}
 
-@Composable
-fun GradientProgressIndicator(
-    currentValue: Float,
-    minValue: Float,
-    maxValue: Float
-) {
-    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(8.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF4CAF50), // Green
-                        Color(0xFFFFEB3B), // Yellow
-                        Color(0xFFFF9800), // Orange
-                        Color(0xFFF44336)  // Red
-                    )
-                )
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(2.dp)
-                .offset(x = (progress * (maxOf(0f, 1f - 2.dp.value / 300.dp.value)) * 300.dp))
-                .background(Color.Black)
-        )
-    }
-}
 
 @Composable
 fun ShareButtonSection(
@@ -1109,33 +1171,6 @@ fun ShareButtonSection(
             }
         }
 
-        // Share button only
-        OutlinedButton(
-            onClick = onShareResults,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color(0xFFE91E63)
-            ),
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                width = 1.dp,
-                brush = Brush.horizontalGradient(listOf(Color(0xFFE91E63), Color(0xFFE91E63)))
-            ),
-            shape = RoundedCornerShape(25.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Share,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Share Results",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
     }
 }
 
@@ -1218,7 +1253,15 @@ fun EnhancedGradientProgressIndicator(
     maxValue: Float,
     modifier: Modifier = Modifier
 ) {
-    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+    // Better error handling for progress calculation
+    val progress = if (currentValue.isFinite() && !currentValue.isNaN() && 
+                       minValue.isFinite() && !minValue.isNaN() && 
+                       maxValue.isFinite() && !maxValue.isNaN() && 
+                       maxValue > minValue) {
+        ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
 
     // Determine status based on progress
     val status = when {
@@ -1277,22 +1320,7 @@ fun EnhancedGradientProgressIndicator(
                     )
             )
 
-            // Animated indicator dot
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .offset(x = (progress * (1f - 16.dp.value / 300.dp.value) * 300.dp))
-                    .offset(y = (-2).dp)
-                    .background(
-                        color = statusColor,
-                        shape = CircleShape
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = Color.White,
-                        shape = CircleShape
-                    )
-            )
+           
         }
 
         // Status indicator
@@ -1328,7 +1356,15 @@ fun ModernProgressIndicator(
     title: String,
     modifier: Modifier = Modifier
 ) {
-    val progress = ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+    // Better error handling for progress calculation
+    val progress = if (currentValue.isFinite() && !currentValue.isNaN() && 
+                       minValue.isFinite() && !minValue.isNaN() && 
+                       maxValue.isFinite() && !maxValue.isNaN() && 
+                       maxValue > minValue) {
+        ((currentValue - minValue) / (maxValue - minValue)).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
 
     // Create segments for different zones
     val segments = listOf(
@@ -1348,7 +1384,7 @@ fun ModernProgressIndicator(
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp))
         ) {
-            // Draw segments
+            // Draw segments using relative positioning
             segments.forEach { segment ->
                 val segmentWidth = segment.end - segment.start
                 val segmentAlpha = if (progress >= segment.start) {
@@ -1360,8 +1396,8 @@ fun ModernProgressIndicator(
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(segment.end)
-                        .offset(x = (segment.start * 300.dp))
+                        .fillMaxWidth(segmentWidth)
+                        .offset(x = (segment.start * 100).dp)
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
@@ -1373,17 +1409,17 @@ fun ModernProgressIndicator(
                 )
             }
 
-            // Current position indicator
-            Box(
-                modifier = Modifier
-                    .width(3.dp)
-                    .fillMaxHeight()
-                    .offset(x = (progress * 297.dp))
-                    .background(
-                        color = currentSegment?.color ?: Color.Gray,
-                        shape = RoundedCornerShape(1.5.dp)
-                    )
-            )
+            // // Current position indicator
+            // Box(
+            //     modifier = Modifier
+            //         .width(3.dp)
+            //         .fillMaxHeight()
+            //         .offset(x = (progress * 100).dp)
+            //         .background(
+            //             color = currentSegment?.color ?: Color.Gray,
+            //             shape = RoundedCornerShape(1.5.dp)
+            //         )
+            // )
         }
 
         // Zone indicators
@@ -1446,27 +1482,29 @@ fun CircularProgressIndicator(
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
             )
 
-            // Progress arc
-            drawArc(
-                brush = Brush.sweepGradient(
-                    colors = listOf(
-                        statusColor.copy(alpha = 0.3f),
-                        statusColor
-                    )
-                ),
-                startAngle = -90f,
-                sweepAngle = animatedProgress * 360f,
-                useCenter = false,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
+            // Progress arc with better error handling
+            if (progress.isFinite() && !progress.isNaN()) {
+                drawArc(
+                    brush = Brush.sweepGradient(
+                        colors = listOf(
+                            statusColor.copy(alpha = 0.3f),
+                            statusColor
+                        )
+                    ),
+                    startAngle = -90f,
+                    sweepAngle = animatedProgress * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
         }
 
-        // Center content
+        // Center content with better error handling
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "${(animatedProgress * 100).toInt()}%",
+                text = if (progress.isFinite() && !progress.isNaN()) "${(animatedProgress * 100).toInt()}%" else "N/A",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = statusColor
@@ -1553,23 +1591,67 @@ fun HealthMetricCard(
                     }
                 }
 
-                // Circular progress indicator
-                CircularProgressIndicator(
-                    currentValue = metric.currentValue,
-                    minValue = metric.rangeMin,
-                    maxValue = metric.rangeMax,
-                    title = "Level"
-                )
+                // Circular progress indicator with fallback
+                if (metric.currentValue.isFinite() && !metric.currentValue.isNaN() && 
+                    metric.rangeMin.isFinite() && !metric.rangeMin.isNaN() && 
+                    metric.rangeMax.isFinite() && !metric.rangeMax.isNaN() && 
+                    metric.rangeMax > metric.rangeMin) {
+                    CircularProgressIndicator(
+                        currentValue = metric.currentValue,
+                        minValue = metric.rangeMin,
+                        maxValue = metric.rangeMax,
+                        title = "Level"
+                    )
+                } else {
+                    // Fallback simple indicator for invalid data
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(
+                                color = Color.Gray.copy(alpha = 0.1f),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "N/A",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Enhanced linear progress indicator
-            EnhancedGradientProgressIndicator(
-                currentValue = metric.currentValue,
-                minValue = metric.rangeMin,
-                maxValue = metric.rangeMax
-            )
+            // Enhanced linear progress indicator with fallback
+            if (metric.currentValue.isFinite() && !metric.currentValue.isNaN() && 
+                metric.rangeMin.isFinite() && !metric.rangeMin.isNaN() && 
+                metric.rangeMax.isFinite() && !metric.rangeMax.isNaN() && 
+                metric.rangeMax > metric.rangeMin) {
+                EnhancedGradientProgressIndicator(
+                    currentValue = metric.currentValue,
+                    minValue = metric.rangeMin,
+                    maxValue = metric.rangeMax
+                )
+            } else {
+                // Fallback simple progress bar for invalid data
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Gray.copy(alpha = 0.3f))
+                ) {
+                    Text(
+                        text = "Data unavailable",
+                        fontSize = 10.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 

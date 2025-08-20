@@ -22,11 +22,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lightbulb
@@ -385,18 +383,6 @@ private fun QuickActionsSection(
                     }
                 )
             }
-
-            // Add chatbot card in a second row
-//            EnhancedQuickActionCard(
-//                title = "AI Assistant",
-//                subtitle = "Ask pregnancy questions",
-//                icon = Icons.Default.Chat,
-//                bgGradient = listOf(Color(0xFFFFF0F3), Color(0xFFFFE0E6)),
-//                iconBgColor = Color(0xFFE91E63),
-//                iconColor = Color.White,
-//                modifier = Modifier.fillMaxWidth(),
-//                onClick = onChatbotClicked
-//            )
         }
     }
 }
